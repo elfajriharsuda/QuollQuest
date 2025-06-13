@@ -112,7 +112,7 @@ export const useUserProfile = () => {
           login_streak: 0,
           longest_streak: 0,
           total_logins: 0,
-          avatar_url: user.user_metadata?.avatar_url || null,
+          avatar_url: 'quoll1', // Default to first quoll avatar
         })
         .select()
         .single();
@@ -212,6 +212,17 @@ export const useUserProfile = () => {
     return { leveledUp: newLevel > profile.level, newLevel };
   };
 
+  const getAvatarUrl = (avatarId: string | null): string => {
+    // If it's a URL (custom uploaded image), return as is
+    if (avatarId && avatarId.startsWith('http')) {
+      return avatarId;
+    }
+    
+    // If it's an avatar ID, return a placeholder for now
+    // In a real app, you'd render the SVG component
+    return `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop`;
+  };
+
   return {
     profile,
     stats,
@@ -220,6 +231,7 @@ export const useUserProfile = () => {
     updateProfile,
     addExperience,
     refreshProfile: fetchUserProfile,
-    refreshStats: fetchUserStats
+    refreshStats: fetchUserStats,
+    getAvatarUrl
   };
 };

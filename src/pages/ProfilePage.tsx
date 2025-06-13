@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../lib/supabase';
 import AvatarSelector from '../components/AvatarSelector';
+import AvatarDisplay from '../components/AvatarDisplay';
 import { 
   Crown, 
   Trophy, 
@@ -57,9 +58,9 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleAvatarSelect = async (avatarUrl: string | null) => {
+  const handleAvatarSelect = async (avatarId: string | null) => {
     try {
-      const result = await updateProfile({ avatar_url: avatarUrl });
+      const result = await updateProfile({ avatar_url: avatarId });
       if (result?.success) {
         toast.success('Avatar updated successfully!');
         setShowAvatarSelector(false);
@@ -177,10 +178,10 @@ const ProfilePage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
             {/* Avatar */}
             <div className="relative">
-              <img
-                src={profile.avatar_url || `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop`}
-                alt={profile.username}
-                className="w-32 h-32 rounded-full border-4 border-primary-500 shadow-2xl object-cover"
+              <AvatarDisplay 
+                avatarId={profile.avatar_url} 
+                size="xl" 
+                className="shadow-2xl"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -413,7 +414,7 @@ const ProfilePage: React.FC = () => {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-dark-card/90 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="bg-dark-card/90 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 max-w-4xl w-full max-h-[80vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white">Select Avatar</h2>
