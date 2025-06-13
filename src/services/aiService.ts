@@ -32,7 +32,7 @@ class AIService {
     
     return {
       questions: questionTemplates.map((template, index) => ({
-        id: `${topic.toLowerCase()}_lv${level}_q${index}_${Date.now()}`,
+        id: `q_${Date.now()}_${index}`,
         question_text: template.question,
         options: template.options,
         correct_answer: template.correct,
@@ -42,1805 +42,1148 @@ class AIService {
   }
 
   private getQuestionTemplates(topic: string, level: number) {
-    const templates: Record<string, Record<number, any[]>> = {
-      'JavaScript': {
-        0: [ // Beginner Level 0 - Basic Syntax & Variables
-          {
-            question: 'What is the correct way to declare a variable in JavaScript?',
-            options: ['variable myVar = 5;', 'var myVar = 5;', 'declare myVar = 5;', 'int myVar = 5;'],
-            correct: 1,
-            explanation: 'In JavaScript, you use "var", "let", or "const" to declare variables. "var" is the traditional way.'
-          },
-          {
-            question: 'Which of the following is a JavaScript data type?',
-            options: ['string', 'integer', 'float', 'character'],
-            correct: 0,
-            explanation: 'JavaScript has primitive data types including string, number, boolean, undefined, null, and symbol.'
-          },
-          {
-            question: 'How do you write a single-line comment in JavaScript?',
-            options: ['<!-- This is a comment -->', '/* This is a comment */', '// This is a comment', '# This is a comment'],
-            correct: 2,
-            explanation: 'JavaScript uses // for single-line comments and /* */ for multi-line comments.'
-          },
-          {
-            question: 'What does console.log() do?',
-            options: ['Creates a new variable', 'Prints output to the console', 'Deletes a variable', 'Creates a function'],
-            correct: 1,
-            explanation: 'console.log() is used to output information to the browser console for debugging purposes.'
-          },
-          {
-            question: 'Which operator is used for strict equality comparison in JavaScript?',
-            options: ['=', '==', '===', 'equals'],
-            correct: 2,
-            explanation: '=== is the strict equality operator that compares both value and type without type coercion.'
-          },
-          {
-            question: 'What is the result of 5 + "3" in JavaScript?',
-            options: ['8', '53', 'Error', 'undefined'],
-            correct: 1,
-            explanation: 'JavaScript performs type coercion, converting the number 5 to a string and concatenating it with "3".'
-          },
-          {
-            question: 'Which keyword is used to create a constant in JavaScript?',
-            options: ['var', 'let', 'const', 'final'],
-            correct: 2,
-            explanation: 'The "const" keyword creates a constant that cannot be reassigned after declaration.'
-          },
-          {
-            question: 'What is the correct way to create a string in JavaScript?',
-            options: ['"Hello World"', "'Hello World'", '`Hello World`', 'All of the above'],
-            correct: 3,
-            explanation: 'JavaScript supports single quotes, double quotes, and template literals (backticks) for creating strings.'
-          },
-          {
-            question: 'What does the typeof operator return for an array?',
-            options: ['array', 'object', 'list', 'undefined'],
-            correct: 1,
-            explanation: 'In JavaScript, arrays are objects, so typeof returns "object" for arrays.'
-          },
-          {
-            question: 'How do you create a multi-line comment in JavaScript?',
-            options: ['// comment', '/* comment */', '<!-- comment -->', '# comment'],
-            correct: 1,
-            explanation: 'Multi-line comments in JavaScript are created using /* to start and */ to end the comment.'
-          }
-        ],
-        1: [ // Beginner Level 1 - Functions & Basic Operations
-          {
-            question: 'What is the output of the following code?\n\nconsole.log(typeof null);',
-            options: ['null', 'undefined', 'object', 'boolean'],
-            correct: 2,
-            explanation: 'In JavaScript, typeof null returns "object" due to a historical bug that has been kept for backward compatibility.'
-          },
-          {
-            question: 'Which method is used to add an element to the end of an array?',
-            options: ['append()', 'push()', 'add()', 'insert()'],
-            correct: 1,
-            explanation: 'The push() method adds one or more elements to the end of an array and returns the new length.'
-          },
-          {
-            question: 'What is the difference between let and var?',
-            options: [
-              'No difference',
-              'let has block scope, var has function scope',
-              'var has block scope, let has function scope',
-              'let is older than var'
-            ],
-            correct: 1,
-            explanation: 'let has block scope and cannot be redeclared, while var has function scope and can be redeclared.'
-          },
-          {
-            question: 'How do you create a function in JavaScript?',
-            options: [
-              'function myFunction() {}',
-              'create function myFunction() {}',
-              'def myFunction() {}',
-              'function = myFunction() {}'
-            ],
-            correct: 0,
-            explanation: 'Functions in JavaScript are declared using the "function" keyword followed by the function name.'
-          },
-          {
-            question: 'What does the return statement do in a function?',
-            options: [
-              'Stops the function and returns a value',
-              'Continues the function execution',
-              'Declares a variable',
-              'Creates a loop'
-            ],
-            correct: 0,
-            explanation: 'The return statement stops function execution and returns a value to the function caller.'
-          },
-          {
-            question: 'Which method removes the last element from an array?',
-            options: ['pop()', 'remove()', 'delete()', 'shift()'],
-            correct: 0,
-            explanation: 'The pop() method removes and returns the last element from an array.'
-          },
-          {
-            question: 'What is the correct way to write an if statement in JavaScript?',
-            options: ['if i = 5 then', 'if (i == 5)', 'if i == 5', 'if i = 5'],
-            correct: 1,
-            explanation: 'JavaScript if statements require parentheses around the condition: if (condition).'
-          },
-          {
-            question: 'How do you create an array in JavaScript?',
-            options: ['var arr = []', 'var arr = ()', 'var arr = {}', 'var arr = <>'],
-            correct: 0,
-            explanation: 'Arrays in JavaScript are created using square brackets [].'
-          },
-          {
-            question: 'What is the result of 10 % 3 in JavaScript?',
-            options: ['3', '1', '0', '3.33'],
-            correct: 1,
-            explanation: 'The % operator returns the remainder of division. 10 divided by 3 is 3 with remainder 1.'
-          },
-          {
-            question: 'Which loop is guaranteed to execute at least once?',
-            options: ['for loop', 'while loop', 'do-while loop', 'foreach loop'],
-            correct: 2,
-            explanation: 'A do-while loop executes the code block first, then checks the condition, guaranteeing at least one execution.'
-          }
-        ],
-        2: [ // Intermediate Level 2 - Objects & Advanced Concepts
-          {
-            question: 'What is closure in JavaScript?',
-            options: [
-              'A way to close the browser',
-              'A function that has access to outer scope variables',
-              'A method to end a loop',
-              'A type of variable declaration'
-            ],
-            correct: 1,
-            explanation: 'A closure is a function that has access to variables in its outer (enclosing) scope even after the outer function has returned.'
-          },
-          {
-            question: 'What does the "this" keyword refer to in a regular function?',
-            options: [
-              'Always the global object',
-              'The current function',
-              'The object that calls the function',
-              'The parent object'
-            ],
-            correct: 2,
-            explanation: 'In a regular function, "this" refers to the object that calls the function, or the global object if no object calls it.'
-          },
-          {
-            question: 'What is the purpose of the async/await syntax?',
-            options: [
-              'To create synchronous code',
-              'To handle asynchronous operations more readably',
-              'To create loops',
-              'To declare variables'
-            ],
-            correct: 1,
-            explanation: 'async/await provides a cleaner way to work with Promises and asynchronous code, making it look more like synchronous code.'
-          },
-          {
-            question: 'What is event bubbling?',
-            options: [
-              'Creating new events',
-              'Events propagating from child to parent elements',
-              'Deleting events',
-              'Events happening simultaneously'
-            ],
-            correct: 1,
-            explanation: 'Event bubbling is when an event starts from the target element and bubbles up through its parent elements.'
-          },
-          {
-            question: 'What is the difference between == and ===?',
-            options: [
-              'No difference',
-              '== checks type and value, === checks only value',
-              '=== checks type and value, == checks only value',
-              '=== checks type and value, == performs type coercion'
-            ],
-            correct: 3,
-            explanation: '=== is strict equality that checks both type and value, while == performs type coercion before comparison.'
-          },
-          {
-            question: 'How do you create an object in JavaScript?',
-            options: ['var obj = []', 'var obj = {}', 'var obj = ()', 'var obj = new Object[]'],
-            correct: 1,
-            explanation: 'Objects in JavaScript are created using curly braces {} or the new Object() constructor.'
-          },
-          {
-            question: 'What is the purpose of JSON.stringify()?',
-            options: [
-              'To parse JSON strings',
-              'To convert JavaScript objects to JSON strings',
-              'To validate JSON',
-              'To format JSON'
-            ],
-            correct: 1,
-            explanation: 'JSON.stringify() converts JavaScript objects into JSON strings for storage or transmission.'
-          },
-          {
-            question: 'What is the scope of a variable declared with let inside a block?',
-            options: ['Global scope', 'Function scope', 'Block scope', 'Module scope'],
-            correct: 2,
-            explanation: 'Variables declared with let have block scope, meaning they are only accessible within the block they are declared in.'
-          },
-          {
-            question: 'Which method is used to iterate over array elements?',
-            options: ['forEach()', 'iterate()', 'loop()', 'each()'],
-            correct: 0,
-            explanation: 'The forEach() method executes a provided function once for each array element.'
-          },
-          {
-            question: 'What happens when you try to access a property that doesn\'t exist on an object?',
-            options: ['Error is thrown', 'Returns undefined', 'Returns null', 'Returns false'],
-            correct: 1,
-            explanation: 'Accessing a non-existent property on an object returns undefined in JavaScript.'
-          }
-        ],
-        3: [ // Intermediate Level 3 - Promises & Modern Features
-          {
-            question: 'What is a Promise in JavaScript?',
-            options: [
-              'A guarantee that code will work',
-              'An object representing eventual completion of an async operation',
-              'A type of variable',
-              'A method to create functions'
-            ],
-            correct: 1,
-            explanation: 'A Promise is an object that represents the eventual completion (or failure) of an asynchronous operation and its resulting value.'
-          },
-          {
-            question: 'What does Array.prototype.map() return?',
-            options: [
-              'The original array modified',
-              'A new array with transformed elements',
-              'A single value',
-              'Nothing'
-            ],
-            correct: 1,
-            explanation: 'The map() method creates a new array with the results of calling a function for every array element.'
-          },
-          {
-            question: 'What is destructuring in JavaScript?',
-            options: [
-              'Breaking code',
-              'Extracting values from arrays or objects into variables',
-              'Deleting variables',
-              'Creating new objects'
-            ],
-            correct: 1,
-            explanation: 'Destructuring allows you to extract values from arrays or properties from objects into distinct variables.'
-          },
-          {
-            question: 'What is the spread operator (...) used for?',
-            options: [
-              'Creating comments',
-              'Expanding arrays or objects',
-              'Creating functions',
-              'Declaring variables'
-            ],
-            correct: 1,
-            explanation: 'The spread operator (...) allows an iterable to be expanded in places where zero or more arguments or elements are expected.'
-          },
-          {
-            question: 'What is hoisting in JavaScript?',
-            options: [
-              'Moving code to the top of the file',
-              'Variable and function declarations being moved to the top of their scope',
-              'Creating new variables',
-              'Deleting old code'
-            ],
-            correct: 1,
-            explanation: 'Hoisting is JavaScript\'s behavior of moving variable and function declarations to the top of their containing scope during compilation.'
-          },
-          {
-            question: 'Which method is used to combine multiple arrays?',
-            options: ['join()', 'concat()', 'merge()', 'combine()'],
-            correct: 1,
-            explanation: 'The concat() method is used to merge two or more arrays and returns a new array.'
-          },
-          {
-            question: 'What is the purpose of the filter() method?',
-            options: [
-              'To modify array elements',
-              'To create a new array with elements that pass a test',
-              'To sort array elements',
-              'To find a single element'
-            ],
-            correct: 1,
-            explanation: 'The filter() method creates a new array with all elements that pass the test implemented by the provided function.'
-          },
-          {
-            question: 'What is a template literal in JavaScript?',
-            options: [
-              'A string enclosed in backticks that allows embedded expressions',
-              'A predefined string template',
-              'A method to create HTML templates',
-              'A way to define string constants'
-            ],
-            correct: 0,
-            explanation: 'Template literals are string literals enclosed in backticks (`) that allow embedded expressions using ${}.'
-          },
-          {
-            question: 'What does the reduce() method do?',
-            options: [
-              'Reduces array size',
-              'Executes a reducer function on each element to produce a single value',
-              'Removes elements from array',
-              'Sorts array elements'
-            ],
-            correct: 1,
-            explanation: 'The reduce() method executes a reducer function on each element of the array, resulting in a single output value.'
-          },
-          {
-            question: 'How do you handle errors in Promises?',
-            options: ['try/catch', 'catch() method', 'error() method', 'Both try/catch and catch() method'],
-            correct: 3,
-            explanation: 'Promise errors can be handled using the catch() method or try/catch blocks with async/await.'
-          }
-        ],
-        4: [ // Advanced Level 4 - Advanced Patterns & APIs
-          {
-            question: 'What is the purpose of WeakMap in JavaScript?',
-            options: [
-              'A map with weak references to keys',
-              'A smaller version of Map',
-              'A map that can be easily deleted',
-              'A map with limited functionality'
-            ],
-            correct: 0,
-            explanation: 'WeakMap holds weak references to its keys, allowing garbage collection of keys when there are no other references to them.'
-          },
-          {
-            question: 'What is a generator function?',
-            options: [
-              'A function that creates other functions',
-              'A function that can pause and resume execution',
-              'A function that generates random numbers',
-              'A function that creates objects'
-            ],
-            correct: 1,
-            explanation: 'Generator functions can pause and resume their execution, yielding multiple values over time using the yield keyword.'
-          },
-          {
-            question: 'What is the purpose of Proxy in JavaScript?',
-            options: [
-              'To create network proxies',
-              'To intercept and customize operations on objects',
-              'To create copies of objects',
-              'To delete objects'
-            ],
-            correct: 1,
-            explanation: 'Proxy allows you to intercept and customize operations performed on objects (property lookup, assignment, enumeration, etc.).'
-          },
-          {
-            question: 'What is the difference between call() and apply()?',
-            options: [
-              'No difference',
-              'call() takes arguments individually, apply() takes an array',
-              'apply() takes arguments individually, call() takes an array',
-              'They work on different types of functions'
-            ],
-            correct: 1,
-            explanation: 'call() takes arguments individually, while apply() takes arguments as an array. Both set the "this" context.'
-          },
-          {
-            question: 'What is a Symbol in JavaScript?',
-            options: [
-              'A mathematical symbol',
-              'A primitive data type for unique identifiers',
-              'A type of string',
-              'A type of number'
-            ],
-            correct: 1,
-            explanation: 'Symbol is a primitive data type that creates unique identifiers for object properties.'
-          },
-          {
-            question: 'What is the purpose of Object.freeze()?',
-            options: [
-              'To stop object execution',
-              'To make an object immutable',
-              'To copy an object',
-              'To delete object properties'
-            ],
-            correct: 1,
-            explanation: 'Object.freeze() makes an object immutable, preventing new properties from being added and existing properties from being modified.'
-          },
-          {
-            question: 'What is the difference between Map and Object?',
-            options: [
-              'No difference',
-              'Map can have any type of keys, Object keys are strings/symbols',
-              'Object can have any type of keys, Map keys are strings',
-              'Map is older than Object'
-            ],
-            correct: 1,
-            explanation: 'Map can have keys of any type, while Object keys are limited to strings and symbols. Map also maintains insertion order.'
-          },
-          {
-            question: 'What is the purpose of the bind() method?',
-            options: [
-              'To combine two functions',
-              'To create a new function with a specific "this" value',
-              'To execute a function immediately',
-              'To copy a function'
-            ],
-            correct: 1,
-            explanation: 'The bind() method creates a new function with a specific "this" value and optionally pre-filled arguments.'
-          },
-          {
-            question: 'What is a Set in JavaScript?',
-            options: [
-              'A collection of unique values',
-              'A type of array',
-              'A mathematical set operation',
-              'A way to set variables'
-            ],
-            correct: 0,
-            explanation: 'Set is a collection object that stores unique values of any type, whether primitive values or object references.'
-          },
-          {
-            question: 'What is the purpose of the Reflect API?',
-            options: [
-              'To create mirrors of objects',
-              'To provide methods for interceptable JavaScript operations',
-              'To reflect light in the browser',
-              'To create reflective properties'
-            ],
-            correct: 1,
-            explanation: 'Reflect provides methods for interceptable JavaScript operations, often used with Proxy for meta-programming.'
-          }
-        ],
-        5: [ // Advanced Level 5 - Expert Concepts & Modern APIs
-          {
-            question: 'What is a SharedArrayBuffer?',
-            options: [
-              'A buffer shared between functions',
-              'A buffer that can be shared between workers',
-              'A buffer that shares memory with other arrays',
-              'A buffer that can be copied'
-            ],
-            correct: 1,
-            explanation: 'SharedArrayBuffer represents a generic, fixed-length raw binary data buffer that can be shared between workers.'
-          },
-          {
-            question: 'What is the purpose of BigInt?',
-            options: [
-              'To create very large objects',
-              'To represent integers larger than Number.MAX_SAFE_INTEGER',
-              'To create big arrays',
-              'To handle big strings'
-            ],
-            correct: 1,
-            explanation: 'BigInt is a primitive that can represent integers larger than 2^53 - 1, which is the largest number JavaScript can reliably represent.'
-          },
-          {
-            question: 'What is the difference between microtasks and macrotasks?',
-            options: [
-              'Microtasks are smaller than macrotasks',
-              'Microtasks have higher priority in the event loop',
-              'Macrotasks have higher priority in the event loop',
-              'There is no difference'
-            ],
-            correct: 1,
-            explanation: 'Microtasks (like Promise callbacks) have higher priority and are executed before macrotasks (like setTimeout) in the event loop.'
-          },
-          {
-            question: 'What is the purpose of the optional chaining operator (?.)?',
-            options: [
-              'To create optional parameters',
-              'To safely access nested object properties',
-              'To create conditional statements',
-              'To chain function calls'
-            ],
-            correct: 1,
-            explanation: 'Optional chaining (?.) allows you to safely access nested object properties without throwing an error if a reference is null or undefined.'
-          },
-          {
-            question: 'What is the nullish coalescing operator (??)?',
-            options: [
-              'An operator that checks for null values',
-              'An operator that returns the right operand when left is null or undefined',
-              'An operator that creates null values',
-              'An operator that removes null values'
-            ],
-            correct: 1,
-            explanation: 'The nullish coalescing operator (??) returns the right operand when the left operand is null or undefined.'
-          },
-          {
-            question: 'What is the purpose of WeakSet?',
-            options: [
-              'A set with weak references to objects',
-              'A smaller version of Set',
-              'A set that can be easily deleted',
-              'A set with limited functionality'
-            ],
-            correct: 0,
-            explanation: 'WeakSet holds weak references to objects, allowing garbage collection when there are no other references to the objects.'
-          },
-          {
-            question: 'What is the purpose of the Atomics object?',
-            options: [
-              'To create atomic elements',
-              'To provide atomic operations on SharedArrayBuffer',
-              'To handle atomic data types',
-              'To create atomic functions'
-            ],
-            correct: 1,
-            explanation: 'Atomics provides atomic operations on SharedArrayBuffer objects, useful for multi-threaded programming with Web Workers.'
-          },
-          {
-            question: 'What is a private field in JavaScript classes?',
-            options: [
-              'A field that cannot be accessed',
-              'A field prefixed with # that is only accessible within the class',
-              'A field that is automatically private',
-              'A field that requires special permissions'
-            ],
-            correct: 1,
-            explanation: 'Private fields are prefixed with # and can only be accessed from within the class that declares them.'
-          },
-          {
-            question: 'What is the purpose of the AbortController?',
-            options: [
-              'To abort JavaScript execution',
-              'To cancel asynchronous operations like fetch requests',
-              'To control browser navigation',
-              'To abort function calls'
-            ],
-            correct: 1,
-            explanation: 'AbortController provides a way to abort asynchronous operations like fetch requests or other DOM operations.'
-          },
-          {
-            question: 'What is the top-level await feature?',
-            options: [
-              'Using await in any function',
-              'Using await at the module level without async function',
-              'Using await at the top of files',
-              'Using await in global scope'
-            ],
-            correct: 1,
-            explanation: 'Top-level await allows you to use await at the module level without wrapping it in an async function.'
-          }
-        ]
-      },
-      'Python': {
-        0: [ // Beginner Level 0 - Basic Syntax
-          {
-            question: 'How do you print "Hello World" in Python?',
-            options: ['echo "Hello World"', 'print("Hello World")', 'console.log("Hello World")', 'printf("Hello World")'],
-            correct: 1,
-            explanation: 'In Python, the print() function is used to output text to the console.'
-          },
-          {
-            question: 'Which of the following is the correct way to create a variable in Python?',
-            options: ['var x = 5', 'int x = 5', 'x = 5', 'declare x = 5'],
-            correct: 2,
-            explanation: 'Python uses dynamic typing, so you simply assign a value to a variable name without declaring its type.'
-          },
-          {
-            question: 'What is the correct file extension for Python files?',
-            options: ['.py', '.python', '.pt', '.pyt'],
-            correct: 0,
-            explanation: 'Python files use the .py extension.'
-          },
-          {
-            question: 'How do you create a comment in Python?',
-            options: ['// This is a comment', '/* This is a comment */', '# This is a comment', '<!-- This is a comment -->'],
-            correct: 2,
-            explanation: 'Python uses the # symbol for single-line comments.'
-          },
-          {
-            question: 'Which of the following is a Python data type?',
-            options: ['list', 'array', 'vector', 'collection'],
-            correct: 0,
-            explanation: 'List is a built-in data type in Python used to store multiple items in a single variable.'
-          },
-          {
-            question: 'What is the result of 10 / 3 in Python 3?',
-            options: ['3', '3.33', '3.3333333333333335', '10/3'],
-            correct: 2,
-            explanation: 'In Python 3, the / operator performs true division and returns a float.'
-          },
-          {
-            question: 'How do you create a string in Python?',
-            options: ['"Hello"', "'Hello'", '"""Hello"""', 'All of the above'],
-            correct: 3,
-            explanation: 'Python supports single quotes, double quotes, and triple quotes for creating strings.'
-          },
-          {
-            question: 'What is the correct way to check if a variable x equals 5?',
-            options: ['if x = 5:', 'if x == 5:', 'if x === 5:', 'if (x == 5):'],
-            correct: 1,
-            explanation: 'Python uses == for equality comparison and requires a colon after the condition.'
-          },
-          {
-            question: 'Which keyword is used to create a function in Python?',
-            options: ['function', 'def', 'func', 'define'],
-            correct: 1,
-            explanation: 'Python functions are defined using the "def" keyword.'
-          },
-          {
-            question: 'What is indentation used for in Python?',
-            options: [
-              'Just for readability',
-              'To define code blocks and scope',
-              'To create comments',
-              'To separate statements'
-            ],
-            correct: 1,
-            explanation: 'Python uses indentation to define code blocks and scope, unlike other languages that use braces.'
-          }
-        ],
-        1: [ // Beginner Level 1 - Data Structures & Control Flow
-          {
-            question: 'What is the output of print(type([]))?',
-            options: ['<class \'array\'>', '<class \'list\'>', '<class \'tuple\'>', '<class \'dict\'>'],
-            correct: 1,
-            explanation: 'Empty square brackets [] create a list in Python, so type([]) returns <class \'list\'>.'
-          },
-          {
-            question: 'Which method is used to add an item to a Python list?',
-            options: ['add()', 'append()', 'insert()', 'Both append() and insert()'],
-            correct: 3,
-            explanation: 'Both append() (adds to end) and insert() (adds at specific index) can be used to add items to a list.'
-          },
-          {
-            question: 'What is the difference between a list and a tuple in Python?',
-            options: [
-              'Lists are ordered, tuples are not',
-              'Lists are mutable, tuples are immutable',
-              'Lists use [], tuples use {}',
-              'No difference'
-            ],
-            correct: 1,
-            explanation: 'The main difference is that lists are mutable (can be changed) while tuples are immutable (cannot be changed after creation).'
-          },
-          {
-            question: 'How do you create a dictionary in Python?',
-            options: ['{}', '[]', '()', 'dict()'],
-            correct: 0,
-            explanation: 'Dictionaries in Python are created using curly braces {} or the dict() constructor.'
-          },
-          {
-            question: 'What is the correct way to create a for loop in Python?',
-            options: ['for i in range(5):', 'for (i = 0; i < 5; i++):', 'for i = 1 to 5:', 'for i in 1..5:'],
-            correct: 0,
-            explanation: 'Python for loops use the "for variable in iterable:" syntax.'
-          },
-          {
-            question: 'Which method removes an item from a list by value?',
-            options: ['delete()', 'remove()', 'pop()', 'discard()'],
-            correct: 1,
-            explanation: 'The remove() method removes the first occurrence of a specified value from a list.'
-          },
-          {
-            question: 'What is the result of len("Hello")?',
-            options: ['4', '5', '6', 'Error'],
-            correct: 1,
-            explanation: 'The len() function returns the number of characters in a string. "Hello" has 5 characters.'
-          },
-          {
-            question: 'How do you access the first element of a list named "my_list"?',
-            options: ['my_list[1]', 'my_list[0]', 'my_list.first()', 'my_list.get(0)'],
-            correct: 1,
-            explanation: 'Python uses zero-based indexing, so the first element is accessed with index 0.'
-          },
-          {
-            question: 'What is the correct way to create a while loop in Python?',
-            options: ['while (condition):', 'while condition:', 'while condition do:', 'while condition then:'],
-            correct: 1,
-            explanation: 'Python while loops use the syntax "while condition:" followed by an indented code block.'
-          },
-          {
-            question: 'Which operator is used for exponentiation in Python?',
-            options: ['^', '**', 'pow', 'exp'],
-            correct: 1,
-            explanation: 'Python uses ** for exponentiation. For example, 2**3 equals 8.'
-          }
-        ],
-        2: [ // Intermediate Level 2 - Functions & Modules
-          {
-            question: 'What is a lambda function in Python?',
-            options: [
-              'A named function',
-              'An anonymous function',
-              'A recursive function',
-              'A built-in function'
-            ],
-            correct: 1,
-            explanation: 'Lambda functions are anonymous functions that can be defined inline using the lambda keyword.'
-          },
-          {
-            question: 'How do you import a specific function from a module?',
-            options: [
-              'import module.function',
-              'from module import function',
-              'import function from module',
-              'include module.function'
-            ],
-            correct: 1,
-            explanation: 'Use "from module import function" to import a specific function from a module.'
-          },
-          {
-            question: 'What is the purpose of the __init__ method in a Python class?',
-            options: [
-              'To initialize class variables',
-              'To create the class',
-              'To destroy the object',
-              'To define class methods'
-            ],
-            correct: 0,
-            explanation: 'The __init__ method is the constructor that initializes object attributes when an instance is created.'
-          },
-          {
-            question: 'What is list comprehension in Python?',
-            options: [
-              'A way to understand lists',
-              'A concise way to create lists',
-              'A method to compress lists',
-              'A way to document lists'
-            ],
-            correct: 1,
-            explanation: 'List comprehension provides a concise way to create lists based on existing lists or other iterables.'
-          },
-          {
-            question: 'What does the "self" parameter represent in a class method?',
-            options: [
-              'The class itself',
-              'The instance of the class',
-              'The parent class',
-              'A static reference'
-            ],
-            correct: 1,
-            explanation: 'The "self" parameter refers to the instance of the class and is used to access instance variables and methods.'
-          },
-          {
-            question: 'How do you handle exceptions in Python?',
-            options: ['try/catch', 'try/except', 'catch/finally', 'handle/error'],
-            correct: 1,
-            explanation: 'Python uses try/except blocks to handle exceptions, with optional else and finally clauses.'
-          },
-          {
-            question: 'What is the difference between "is" and "==" in Python?',
-            options: [
-              'No difference',
-              '"is" checks identity, "==" checks equality',
-              '"==" checks identity, "is" checks equality',
-              'Both check identity'
-            ],
-            correct: 1,
-            explanation: '"is" checks if two variables refer to the same object, while "==" checks if the values are equal.'
-          },
-          {
-            question: 'What is a generator in Python?',
-            options: [
-              'A function that creates other functions',
-              'A function that yields values one at a time',
-              'A random number generator',
-              'A code generator tool'
-            ],
-            correct: 1,
-            explanation: 'Generators are functions that yield values one at a time, allowing for memory-efficient iteration.'
-          },
-          {
-            question: 'How do you create a virtual environment in Python?',
-            options: ['pip install venv', 'python -m venv env_name', 'create-env env_name', 'virtualenv only'],
-            correct: 1,
-            explanation: 'python -m venv env_name is the standard way to create virtual environments in Python 3.3+.'
-          },
-          {
-            question: 'What is the purpose of the "with" statement in Python?',
-            options: [
-              'To create variables',
-              'To ensure proper resource management',
-              'To create loops',
-              'To define functions'
-            ],
-            correct: 1,
-            explanation: 'The "with" statement ensures proper acquisition and release of resources, commonly used with file operations.'
-          }
-        ],
-        3: [ // Intermediate Level 3 - Advanced Data Structures & OOP
-          {
-            question: 'What is the difference between a shallow copy and a deep copy?',
-            options: [
-              'No difference',
-              'Shallow copy copies references, deep copy copies objects',
-              'Deep copy copies references, shallow copy copies objects',
-              'Both copy references'
-            ],
-            correct: 1,
-            explanation: 'Shallow copy creates a new object but inserts references to objects in the original, while deep copy creates completely independent copies.'
-          },
-          {
-            question: 'What is method overriding in Python?',
-            options: [
-              'Creating multiple methods with same name',
-              'Redefining a parent class method in a child class',
-              'Calling multiple methods at once',
-              'Deleting methods'
-            ],
-            correct: 1,
-            explanation: 'Method overriding allows a child class to provide a specific implementation of a method defined in its parent class.'
-          },
-          {
-            question: 'What is the purpose of *args in a function definition?',
-            options: [
-              'To pass keyword arguments',
-              'To pass a variable number of positional arguments',
-              'To pass default arguments',
-              'To pass required arguments'
-            ],
-            correct: 1,
-            explanation: '*args allows a function to accept any number of positional arguments as a tuple.'
-          },
-          {
-            question: 'What is the purpose of **kwargs in a function definition?',
-            options: [
-              'To pass positional arguments',
-              'To pass a variable number of keyword arguments',
-              'To pass default arguments',
-              'To pass required arguments'
-            ],
-            correct: 1,
-            explanation: '**kwargs allows a function to accept any number of keyword arguments as a dictionary.'
-          },
-          {
-            question: 'What is a decorator in Python?',
-            options: [
-              'A way to decorate code with comments',
-              'A function that modifies or extends another function',
-              'A design pattern',
-              'A way to format output'
-            ],
-            correct: 1,
-            explanation: 'A decorator is a function that takes another function and extends its behavior without explicitly modifying it.'
-          },
-          {
-            question: 'What is the difference between a set and a list in Python?',
-            options: [
-              'Sets are ordered, lists are not',
-              'Sets contain unique elements, lists can have duplicates',
-              'Lists are faster than sets',
-              'No difference'
-            ],
-            correct: 1,
-            explanation: 'Sets automatically handle uniqueness and are unordered, while lists maintain order and allow duplicates.'
-          },
-          {
-            question: 'What is multiple inheritance in Python?',
-            options: [
-              'A class inheriting from multiple objects',
-              'A class inheriting from multiple parent classes',
-              'Multiple classes inheriting from one parent',
-              'Creating multiple instances of a class'
-            ],
-            correct: 1,
-            explanation: 'Multiple inheritance allows a class to inherit attributes and methods from multiple parent classes.'
-          },
-          {
-            question: 'What is the purpose of the @property decorator?',
-            options: [
-              'To create class properties',
-              'To make methods behave like attributes',
-              'To protect attributes',
-              'To create static methods'
-            ],
-            correct: 1,
-            explanation: 'The @property decorator allows methods to be accessed like attributes, providing getter functionality.'
-          },
-          {
-            question: 'What is a context manager in Python?',
-            options: [
-              'A manager for contexts',
-              'An object that defines methods for use with "with" statement',
-              'A memory manager',
-              'A file manager'
-            ],
-            correct: 1,
-            explanation: 'A context manager is an object that defines methods to be used with the "with" statement for resource management.'
-          },
-          {
-            question: 'What is the difference between append() and extend() for lists?',
-            options: [
-              'No difference',
-              'append() adds single element, extend() adds multiple elements',
-              'extend() adds single element, append() adds multiple elements',
-              'Both add single elements'
-            ],
-            correct: 1,
-            explanation: 'append() adds a single element to the end of a list, while extend() adds all elements from an iterable.'
-          }
-        ],
-        4: [ // Advanced Level 4 - Advanced Concepts & Libraries
-          {
-            question: 'What is the Global Interpreter Lock (GIL) in Python?',
-            options: [
-              'A lock for global variables',
-              'A mechanism that prevents multiple threads from executing Python code simultaneously',
-              'A security feature',
-              'A memory management tool'
-            ],
-            correct: 1,
-            explanation: 'The GIL is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes simultaneously.'
-          },
-          {
-            question: 'What is the difference between multiprocessing and multithreading in Python?',
-            options: [
-              'No difference',
-              'Multiprocessing uses separate processes, multithreading uses threads within a process',
-              'Multithreading uses separate processes, multiprocessing uses threads',
-              'Both use the same mechanism'
-            ],
-            correct: 1,
-            explanation: 'Multiprocessing creates separate processes that can run in parallel, while multithreading creates threads within a single process.'
-          },
-          {
-            question: 'What is a metaclass in Python?',
-            options: [
-              'A class that inherits from multiple classes',
-              'A class whose instances are classes',
-              'A class with meta information',
-              'A class that cannot be instantiated'
-            ],
-            correct: 1,
-            explanation: 'A metaclass is a class whose instances are classes themselves, controlling how classes are created.'
-          },
-          {
-            question: 'What is the purpose of the __slots__ attribute?',
-            options: [
-              'To create time slots',
-              'To restrict attribute creation and save memory',
-              'To create method slots',
-              'To define class hierarchy'
-            ],
-            correct: 1,
-            explanation: '__slots__ restricts the attributes that can be created for instances and can save memory by avoiding __dict__.'
-          },
-          {
-            question: 'What is monkey patching in Python?',
-            options: [
-              'Patching code like a monkey',
-              'Dynamically modifying classes or modules at runtime',
-              'A debugging technique',
-              'A testing methodology'
-            ],
-            correct: 1,
-            explanation: 'Monkey patching is the practice of dynamically modifying classes or modules at runtime.'
-          },
-          {
-            question: 'What is the difference between @staticmethod and @classmethod?',
-            options: [
-              'No difference',
-              '@staticmethod doesn\'t receive class/instance, @classmethod receives class',
-              '@classmethod doesn\'t receive class/instance, @staticmethod receives class',
-              'Both receive the same parameters'
-            ],
-            correct: 1,
-            explanation: '@staticmethod doesn\'t receive any implicit first argument, while @classmethod receives the class as the first argument.'
-          },
-          {
-            question: 'What is a descriptor in Python?',
-            options: [
-              'A way to describe objects',
-              'An object that defines how attribute access is handled',
-              'A documentation tool',
-              'A type annotation'
-            ],
-            correct: 1,
-            explanation: 'A descriptor is an object that defines how attribute access is handled through __get__, __set__, and __delete__ methods.'
-          },
-          {
-            question: 'What is the purpose of the asyncio library?',
-            options: [
-              'To handle synchronous operations',
-              'To write asynchronous, concurrent code',
-              'To create async functions only',
-              'To manage threads'
-            ],
-            correct: 1,
-            explanation: 'asyncio is a library for writing asynchronous, concurrent code using async/await syntax and event loops.'
-          },
-          {
-            question: 'What is the difference between yield and return?',
-            options: [
-              'No difference',
-              'yield creates a generator, return ends function execution',
-              'return creates a generator, yield ends function execution',
-              'Both end function execution'
-            ],
-            correct: 1,
-            explanation: 'yield creates a generator that can be resumed, while return ends function execution and returns a value.'
-          },
-          {
-            question: 'What is the purpose of the collections module?',
-            options: [
-              'To collect garbage',
-              'To provide specialized container datatypes',
-              'To manage collections of files',
-              'To create collections of functions'
-            ],
-            correct: 1,
-            explanation: 'The collections module provides specialized container datatypes like namedtuple, deque, Counter, etc.'
-          }
-        ],
-        5: [ // Expert Level 5 - Expert Concepts & Performance
-          {
-            question: 'What is the difference between CPython, PyPy, and Jython?',
-            options: [
-              'They are all the same',
-              'Different implementations of Python with different performance characteristics',
-              'Different versions of Python',
-              'Different Python libraries'
-            ],
-            correct: 1,
-            explanation: 'CPython is the standard implementation, PyPy uses JIT compilation for speed, and Jython runs on the JVM.'
-          },
-          {
-            question: 'What is the purpose of the __new__ method?',
-            options: [
-              'To create new variables',
-              'To control object creation before __init__',
-              'To create new methods',
-              'To update objects'
-            ],
-            correct: 1,
-            explanation: '__new__ is responsible for creating and returning a new instance of a class, called before __init__.'
-          },
-          {
-            question: 'What is memory profiling and why is it important?',
-            options: [
-              'Profiling user memories',
-              'Analyzing memory usage to optimize performance and detect leaks',
-              'Creating memory backups',
-              'Managing memory allocation'
-            ],
-            correct: 1,
-            explanation: 'Memory profiling analyzes how much memory your program uses and helps identify memory leaks and optimization opportunities.'
-          },
-          {
-            question: 'What is the difference between is and == when comparing None?',
-            options: [
-              'No difference',
-              'Use "is None" for None comparison, == for value comparison',
-              'Use "== None" for None comparison, is for value comparison',
-              'Both are equally good'
-            ],
-            correct: 1,
-            explanation: 'Use "is None" when checking for None because None is a singleton, and "is" checks identity which is more appropriate.'
-          },
-          {
-            question: 'What is the purpose of the weakref module?',
-            options: [
-              'To create weak references that don\'t prevent garbage collection',
-              'To create weak variables',
-              'To handle weak network connections',
-              'To create temporary references'
-            ],
-            correct: 0,
-            explanation: 'weakref allows you to create references to objects that don\'t prevent the object from being garbage collected.'
-          },
-          {
-            question: 'What is the difference between __str__ and __repr__?',
-            options: [
-              'No difference',
-              '__str__ for human-readable output, __repr__ for developer representation',
-              '__repr__ for human-readable output, __str__ for developer representation',
-              'Both serve the same purpose'
-            ],
-            correct: 1,
-            explanation: '__str__ should return a human-readable string, while __repr__ should return an unambiguous representation for developers.'
-          },
-          {
-            question: 'What is the purpose of the dis module?',
-            options: [
-              'To disable modules',
-              'To disassemble Python bytecode',
-              'To distribute modules',
-              'To disconnect from services'
-            ],
-            correct: 1,
-            explanation: 'The dis module provides functions to analyze and disassemble Python bytecode for debugging and optimization.'
-          },
-          {
-            question: 'What is the difference between bound and unbound methods?',
-            options: [
-              'Bound methods are tied to an instance, unbound methods are not',
-              'Unbound methods are tied to an instance, bound methods are not',
-              'No difference in Python 3',
-              'Both are the same'
-            ],
-            correct: 0,
-            explanation: 'Bound methods are associated with an instance and automatically pass self, while unbound methods (Python 2 concept) are not tied to instances.'
-          },
-          {
-            question: 'What is the purpose of the __call__ method?',
-            options: [
-              'To call other methods',
-              'To make objects callable like functions',
-              'To handle phone calls',
-              'To call parent methods'
-            ],
-            correct: 1,
-            explanation: 'The __call__ method allows objects to be called like functions using the () operator.'
-          },
-          {
-            question: 'What is the difference between shallow and deep copying with respect to nested objects?',
-            options: [
-              'Shallow copy copies all levels, deep copy copies one level',
-              'Deep copy copies all levels recursively, shallow copy copies one level',
-              'No difference',
-              'Both copy all levels'
-            ],
-            correct: 1,
-            explanation: 'Deep copy recursively copies all nested objects, while shallow copy only copies the top level, sharing references to nested objects.'
-          }
-        ]
-      },
-      'React': {
-        0: [ // Beginner Level 0 - React Basics
-          {
-            question: 'What is React?',
-            options: [
-              'A JavaScript library for building user interfaces',
-              'A database management system',
-              'A web server',
-              'A CSS framework'
-            ],
-            correct: 0,
-            explanation: 'React is a JavaScript library developed by Facebook for building user interfaces, particularly web applications.'
-          },
-          {
-            question: 'What is JSX?',
-            options: [
-              'A new programming language',
-              'JavaScript XML - a syntax extension',
-              'A CSS framework',
-              'A database query language'
-            ],
-            correct: 1,
-            explanation: 'JSX is a syntax extension for JavaScript that allows you to write HTML-like code in your JavaScript files.'
-          },
-          {
-            question: 'How do you create a React component?',
-            options: [
-              'function MyComponent() { return <div>Hello</div>; }',
-              'component MyComponent() { return <div>Hello</div>; }',
-              'create MyComponent() { return <div>Hello</div>; }',
-              'class MyComponent() { return <div>Hello</div>; }'
-            ],
-            correct: 0,
-            explanation: 'React functional components are created using regular JavaScript functions that return JSX.'
-          },
-          {
-            question: 'What is the virtual DOM?',
-            options: [
-              'A copy of the real DOM kept in memory',
-              'A new type of HTML',
-              'A CSS framework',
-              'A database'
-            ],
-            correct: 0,
-            explanation: 'The virtual DOM is a JavaScript representation of the real DOM kept in memory and synced with the real DOM.'
-          },
-          {
-            question: 'How do you pass data to a React component?',
-            options: ['Through state', 'Through props', 'Through context', 'Through refs'],
-            correct: 1,
-            explanation: 'Props (properties) are the primary way to pass data from parent components to child components in React.'
-          },
-          {
-            question: 'What is the correct way to import React?',
-            options: [
-              'import React from "react"',
-              'include React from "react"',
-              'require React from "react"',
-              'import { React } from "react"'
-            ],
-            correct: 0,
-            explanation: 'React is imported as a default export using import React from "react".'
-          },
-          {
-            question: 'How do you render a React component to the DOM?',
-            options: [
-              'ReactDOM.render()',
-              'React.render()',
-              'document.render()',
-              'component.render()'
-            ],
-            correct: 0,
-            explanation: 'ReactDOM.render() is used to render React components to the DOM (React 17 and earlier).'
-          },
-          {
-            question: 'What is the file extension typically used for React components?',
-            options: ['.js', '.jsx', '.react', 'Both .js and .jsx'],
-            correct: 3,
-            explanation: 'React components can use either .js or .jsx extensions, though .jsx is more descriptive for JSX content.'
-          },
-          {
-            question: 'What must every React component return?',
-            options: ['A string', 'JSX or null', 'An object', 'A number'],
-            correct: 1,
-            explanation: 'React components must return JSX elements, null, or other valid React elements.'
-          },
-          {
-            question: 'How do you add CSS classes to JSX elements?',
-            options: ['class="my-class"', 'className="my-class"', 'cssClass="my-class"', 'style="my-class"'],
-            correct: 1,
-            explanation: 'In JSX, you use className instead of class to add CSS classes because class is a reserved word in JavaScript.'
-          }
-        ],
-        1: [ // Beginner Level 1 - State & Events
-          {
-            question: 'Which hook is used to manage state in functional components?',
-            options: ['useEffect', 'useState', 'useContext', 'useReducer'],
-            correct: 1,
-            explanation: 'useState is the primary hook for managing state in functional React components.'
-          },
-          {
-            question: 'What is the purpose of useEffect hook?',
-            options: [
-              'To manage component state',
-              'To handle side effects',
-              'To create context',
-              'To optimize performance'
-            ],
-            correct: 1,
-            explanation: 'useEffect is used to handle side effects like API calls, subscriptions, or manually changing the DOM.'
-          },
-          {
-            question: 'How do you handle events in React?',
-            options: [
-              'onClick="handleClick()"',
-              'onClick={handleClick}',
-              'onclick={handleClick}',
-              'onPress={handleClick}'
-            ],
-            correct: 1,
-            explanation: 'React uses camelCase event handlers and passes functions as references, not strings.'
-          },
-          {
-            question: 'What is the key prop used for in React lists?',
-            options: [
-              'To style list items',
-              'To help React identify which items have changed',
-              'To sort the list',
-              'To filter the list'
-            ],
-            correct: 1,
-            explanation: 'The key prop helps React identify which items have changed, are added, or are removed for efficient re-rendering.'
-          },
-          {
-            question: 'What is conditional rendering in React?',
-            options: [
-              'Rendering components based on conditions',
-              'Rendering components in a specific order',
-              'Rendering components with CSS conditions',
-              'Rendering components asynchronously'
-            ],
-            correct: 0,
-            explanation: 'Conditional rendering allows you to render different components or elements based on certain conditions.'
-          },
-          {
-            question: 'How do you update state in a functional component?',
-            options: [
-              'this.setState()',
-              'setState()',
-              'Using the setter function from useState',
-              'state.update()'
-            ],
-            correct: 2,
-            explanation: 'In functional components, you use the setter function returned by useState to update state.'
-          },
-          {
-            question: 'What happens when state changes in React?',
-            options: [
-              'Nothing happens',
-              'The component re-renders',
-              'The page refreshes',
-              'The application restarts'
-            ],
-            correct: 1,
-            explanation: 'When state changes, React re-renders the component to reflect the new state.'
-          },
-          {
-            question: 'How do you prevent the default behavior of an event in React?',
-            options: [
-              'event.preventDefault()',
-              'event.stopDefault()',
-              'event.prevent()',
-              'return false'
-            ],
-            correct: 0,
-            explanation: 'Use event.preventDefault() to prevent the default behavior of an event in React.'
-          },
-          {
-            question: 'What is the correct way to handle form input in React?',
-            options: [
-              'Using refs only',
-              'Using controlled components with state',
-              'Using jQuery',
-              'Using vanilla JavaScript'
-            ],
-            correct: 1,
-            explanation: 'Controlled components use React state to manage form input values, providing better control and validation.'
-          },
-          {
-            question: 'How do you pass a parameter to an event handler?',
-            options: [
-              'onClick={handleClick(param)}',
-              'onClick={() => handleClick(param)}',
-              'onClick={handleClick.bind(param)}',
-              'onClick={handleClick, param}'
-            ],
-            correct: 1,
-            explanation: 'Use an arrow function to pass parameters to event handlers: onClick={() => handleClick(param)}.'
-          }
-        ],
-        2: [ // Intermediate Level 2 - Component Lifecycle & Advanced Hooks
-          {
-            question: 'What is the dependency array in useEffect?',
-            options: [
-              'An array of components',
-              'An array of values that determine when the effect runs',
-              'An array of functions',
-              'An array of props'
-            ],
-            correct: 1,
-            explanation: 'The dependency array tells useEffect when to run by comparing the values in the array between renders.'
-          },
-          {
-            question: 'What happens if you omit the dependency array in useEffect?',
-            options: [
-              'The effect never runs',
-              'The effect runs on every render',
-              'The effect runs once',
-              'An error occurs'
-            ],
-            correct: 1,
-            explanation: 'Without a dependency array, useEffect runs after every render, which can cause performance issues.'
-          },
-          {
-            question: 'How do you clean up side effects in useEffect?',
-            options: [
-              'Use a cleanup function',
-              'Return a function from useEffect',
-              'Use useCleanup hook',
-              'Both A and B'
-            ],
-            correct: 3,
-            explanation: 'Return a cleanup function from useEffect to clean up side effects like subscriptions or timers.'
-          },
-          {
-            question: 'What is the useContext hook used for?',
-            options: [
-              'To create context',
-              'To consume context values',
-              'To update context',
-              'To delete context'
-            ],
-            correct: 1,
-            explanation: 'useContext is used to consume values from a React context without wrapping components in Consumer.'
-          },
-          {
-            question: 'What is prop drilling?',
-            options: [
-              'Drilling holes in props',
-              'Passing props through multiple component levels',
-              'Creating props dynamically',
-              'Validating props'
-            ],
-            correct: 1,
-            explanation: 'Prop drilling is passing props through multiple component levels to reach deeply nested components.'
-          },
-          {
-            question: 'How do you optimize performance in React?',
-            options: [
-              'Using React.memo',
-              'Using useMemo and useCallback',
-              'Avoiding unnecessary re-renders',
-              'All of the above'
-            ],
-            correct: 3,
-            explanation: 'React performance can be optimized using React.memo, useMemo, useCallback, and avoiding unnecessary re-renders.'
-          },
-          {
-            question: 'What is the purpose of React.memo?',
-            options: [
-              'To memorize components',
-              'To prevent unnecessary re-renders of functional components',
-              'To store component state',
-              'To create memoized functions'
-            ],
-            correct: 1,
-            explanation: 'React.memo is a higher-order component that prevents re-renders if props haven\'t changed.'
-          },
-          {
-            question: 'What is the difference between useMemo and useCallback?',
-            options: [
-              'No difference',
-              'useMemo memoizes values, useCallback memoizes functions',
-              'useCallback memoizes values, useMemo memoizes functions',
-              'Both memoize the same things'
-            ],
-            correct: 1,
-            explanation: 'useMemo memoizes computed values, while useCallback memoizes function references.'
-          },
-          {
-            question: 'What is a custom hook?',
-            options: [
-              'A hook provided by React',
-              'A reusable function that uses React hooks',
-              'A hook for customizing components',
-              'A hook for styling'
-            ],
-            correct: 1,
-            explanation: 'Custom hooks are reusable functions that use React hooks to encapsulate stateful logic.'
-          },
-          {
-            question: 'How do you share state between components?',
-            options: [
-              'Using props',
-              'Using context',
-              'Lifting state up',
-              'All of the above'
-            ],
-            correct: 3,
-            explanation: 'State can be shared through props, context, or by lifting state up to a common parent component.'
-          }
-        ],
-        3: [ // Intermediate Level 3 - Advanced Patterns & State Management
-          {
-            question: 'What is the useReducer hook used for?',
-            options: [
-              'To reduce component size',
-              'To manage complex state logic',
-              'To reduce re-renders',
-              'To reduce bundle size'
-            ],
-            correct: 1,
-            explanation: 'useReducer is used for managing complex state logic, especially when state updates depend on previous state.'
-          },
-          {
-            question: 'What is a higher-order component (HOC)?',
-            options: [
-              'A component with high priority',
-              'A function that takes a component and returns a new component',
-              'A component at the top of the tree',
-              'A component with many props'
-            ],
-            correct: 1,
-            explanation: 'A HOC is a function that takes a component and returns a new component with additional functionality.'
-          },
-          {
-            question: 'What is the render prop pattern?',
-            options: [
-              'A prop that renders components',
-              'A technique for sharing code using a prop whose value is a function',
-              'A way to render props',
-              'A method to optimize rendering'
-            ],
-            correct: 1,
-            explanation: 'Render props is a technique for sharing code between components using a prop whose value is a function.'
-          },
-          {
-            question: 'What is React.Fragment used for?',
-            options: [
-              'To fragment components',
-              'To group multiple elements without adding extra DOM nodes',
-              'To create fragments of code',
-              'To break components'
-            ],
-            correct: 1,
-            explanation: 'React.Fragment allows you to group multiple elements without adding an extra DOM node.'
-          },
-          {
-            question: 'What is the purpose of the key prop in React?',
-            options: [
-              'To unlock components',
-              'To help React identify which items have changed in lists',
-              'To create unique components',
-              'To encrypt component data'
-            ],
-            correct: 1,
-            explanation: 'The key prop helps React identify which items have changed, are added, or removed in lists for efficient updates.'
-          },
-          {
-            question: 'What is lazy loading in React?',
-            options: [
-              'Loading components slowly',
-              'Loading components only when needed',
-              'Loading components lazily',
-              'Delaying component loading'
-            ],
-            correct: 1,
-            explanation: 'Lazy loading loads components only when they are needed, improving initial load performance.'
-          },
-          {
-            question: 'How do you implement lazy loading in React?',
-            options: [
-              'React.lazy() and Suspense',
-              'import() and Suspense',
-              'lazy() and Loading',
-              'Both A and B'
-            ],
-            correct: 3,
-            explanation: 'Lazy loading is implemented using React.lazy() with dynamic import() and Suspense for loading states.'
-          },
-          {
-            question: 'What is the purpose of Suspense in React?',
-            options: [
-              'To create suspenseful UIs',
-              'To handle loading states for lazy components',
-              'To suspend component rendering',
-              'To create animations'
-            ],
-            correct: 1,
-            explanation: 'Suspense provides a way to handle loading states while waiting for lazy components to load.'
-          },
-          {
-            question: 'What is the difference between controlled and uncontrolled components?',
-            options: [
-              'Controlled components use state, uncontrolled use refs',
-              'Uncontrolled components use state, controlled use refs',
-              'No difference',
-              'Both use the same approach'
-            ],
-            correct: 0,
-            explanation: 'Controlled components use React state to manage form data, while uncontrolled components use refs to access DOM values.'
-          },
-          {
-            question: 'What is the purpose of useRef hook?',
-            options: [
-              'To create references to DOM elements',
-              'To store mutable values that persist across renders',
-              'To access child component methods',
-              'All of the above'
-            ],
-            correct: 3,
-            explanation: 'useRef can create DOM references, store mutable values, and access child component methods.'
-          }
-        ],
-        4: [ // Advanced Level 4 - Performance & Advanced Concepts
-          {
-            question: 'What is React Fiber?',
-            options: [
-              'A type of React component',
-              'React\'s reconciliation algorithm',
-              'A React library',
-              'A performance tool'
-            ],
-            correct: 1,
-            explanation: 'React Fiber is the reconciliation algorithm that enables features like time slicing and concurrent rendering.'
-          },
-          {
-            question: 'What is concurrent rendering in React?',
-            options: [
-              'Rendering multiple components at once',
-              'React\'s ability to interrupt and resume rendering work',
-              'Rendering components concurrently',
-              'Parallel component rendering'
-            ],
-            correct: 1,
-            explanation: 'Concurrent rendering allows React to interrupt and resume rendering work to keep the app responsive.'
-          },
-          {
-            question: 'What is the purpose of React.StrictMode?',
-            options: [
-              'To enforce strict coding standards',
-              'To help identify potential problems in development',
-              'To improve performance',
-              'To enable strict type checking'
-            ],
-            correct: 1,
-            explanation: 'StrictMode helps identify potential problems by intentionally double-invoking functions and highlighting issues.'
-          },
-          {
-            question: 'What is the difference between React.memo and useMemo?',
-            options: [
-              'React.memo memoizes components, useMemo memoizes values',
-              'useMemo memoizes components, React.memo memoizes values',
-              'No difference',
-              'Both memoize components'
-            ],
-            correct: 0,
-            explanation: 'React.memo memoizes entire components, while useMemo memoizes computed values within components.'
-          },
-          {
-            question: 'What is the purpose of the useLayoutEffect hook?',
-            options: [
-              'To create layouts',
-              'To run effects synchronously after DOM mutations',
-              'To optimize layout performance',
-              'To handle layout changes'
-            ],
-            correct: 1,
-            explanation: 'useLayoutEffect runs synchronously after all DOM mutations, useful for measuring DOM elements.'
-          },
-          {
-            question: 'What is React Server Components?',
-            options: [
-              'Components that run on the server',
-              'Components for server-side rendering',
-              'Components that fetch server data',
-              'Server-side React components'
-            ],
-            correct: 0,
-            explanation: 'React Server Components run on the server and can directly access server resources without client-side JavaScript.'
-          },
-          {
-            question: 'What is the purpose of the useImperativeHandle hook?',
-            options: [
-              'To handle imperative code',
-              'To customize the instance value exposed by ref',
-              'To create imperative APIs',
-              'To handle imperative updates'
-            ],
-            correct: 1,
-            explanation: 'useImperativeHandle customizes the instance value that is exposed to parent components when using ref.'
-          },
-          {
-            question: 'What is React\'s reconciliation process?',
-            options: [
-              'The process of reconciling differences',
-              'The algorithm React uses to diff and update the DOM',
-              'The process of component reconciliation',
-              'The method to reconcile state'
-            ],
-            correct: 1,
-            explanation: 'Reconciliation is React\'s algorithm for determining what changes need to be made to update the DOM efficiently.'
-          },
-          {
-            question: 'What is the purpose of React DevTools?',
-            options: [
-              'To develop React apps',
-              'To debug and profile React applications',
-              'To create React tools',
-              'To deploy React apps'
-            ],
-            correct: 1,
-            explanation: 'React DevTools is a browser extension for debugging React component hierarchies and performance profiling.'
-          },
-          {
-            question: 'What is the difference between shallow and deep comparison in React?',
-            options: [
-              'Shallow compares references, deep compares values recursively',
-              'Deep compares references, shallow compares values',
-              'No difference',
-              'Both compare the same way'
-            ],
-            correct: 0,
-            explanation: 'Shallow comparison checks if references are the same, while deep comparison recursively checks all nested values.'
-          }
-        ],
-        5: [ // Expert Level 5 - Expert Patterns & Architecture
-          {
-            question: 'What is the purpose of React.startTransition?',
-            options: [
-              'To start component transitions',
-              'To mark updates as non-urgent for better user experience',
-              'To create transition animations',
-              'To transition between routes'
-            ],
-            correct: 1,
-            explanation: 'startTransition marks updates as non-urgent, allowing React to prioritize more urgent updates for better UX.'
-          },
-          {
-            question: 'What is the useDeferredValue hook used for?',
-            options: [
-              'To defer value updates',
-              'To defer expensive computations until more urgent updates complete',
-              'To create deferred values',
-              'To delay value changes'
-            ],
-            correct: 1,
-            explanation: 'useDeferredValue defers updates to less critical parts of the UI until more urgent updates are complete.'
-          },
-          {
-            question: 'What is the purpose of React.unstable_batchedUpdates?',
-            options: [
-              'To batch component updates',
-              'To group multiple state updates into a single re-render',
-              'To create update batches',
-              'To optimize update performance'
-            ],
-            correct: 1,
-            explanation: 'batchedUpdates groups multiple state updates into a single re-render for better performance.'
-          },
-          {
-            question: 'What is the difference between React 17 and React 18 event handling?',
-            options: [
-              'No difference',
-              'React 18 uses automatic batching for all updates',
-              'React 17 uses automatic batching for all updates',
-              'Both handle events the same way'
-            ],
-            correct: 1,
-            explanation: 'React 18 introduces automatic batching for all updates, including those in promises, timeouts, and native event handlers.'
-          },
-          {
-            question: 'What is the purpose of the useId hook?',
-            options: [
-              'To create unique IDs',
-              'To generate stable unique IDs for accessibility attributes',
-              'To identify components',
-              'To create ID references'
-            ],
-            correct: 1,
-            explanation: 'useId generates stable unique IDs that are consistent between server and client for accessibility attributes.'
-          },
-          {
-            question: 'What is React\'s time slicing feature?',
-            options: [
-              'Slicing time for components',
-              'Breaking rendering work into chunks to maintain responsiveness',
-              'Creating time-based slices',
-              'Optimizing time-based operations'
-            ],
-            correct: 1,
-            explanation: 'Time slicing breaks rendering work into small chunks, allowing React to pause and resume work to keep the app responsive.'
-          },
-          {
-            question: 'What is the purpose of React.unstable_act in testing?',
-            options: [
-              'To act on components',
-              'To ensure all updates are flushed before assertions',
-              'To create test actions',
-              'To simulate user actions'
-            ],
-            correct: 1,
-            explanation: 'act ensures that all updates related to state changes are flushed before making assertions in tests.'
-          },
-          {
-            question: 'What is the difference between React.createElement and JSX?',
-            options: [
-              'JSX is compiled to React.createElement calls',
-              'React.createElement is compiled to JSX',
-              'No difference',
-              'They serve different purposes'
-            ],
-            correct: 0,
-            explanation: 'JSX is syntactic sugar that gets compiled to React.createElement calls by build tools like Babel.'
-          },
-          {
-            question: 'What is the purpose of React.cloneElement?',
-            options: [
-              'To clone React elements',
-              'To clone elements with new props',
-              'To duplicate components',
-              'To copy element references'
-            ],
-            correct: 1,
-            explanation: 'React.cloneElement creates a copy of a React element with new props, useful for modifying children elements.'
-          },
-          {
-            question: 'What is the React Profiler API used for?',
-            options: [
-              'To profile user behavior',
-              'To measure rendering performance programmatically',
-              'To create performance profiles',
-              'To profile component usage'
-            ],
-            correct: 1,
-            explanation: 'The Profiler API allows you to measure rendering performance programmatically and collect timing information.'
-          }
-        ]
-      }
+    const allQuestions = this.getAllQuestions(topic);
+    
+    // Get 10 questions for the specific level
+    const startIndex = level * 10;
+    const endIndex = startIndex + 10;
+    
+    // If we don't have enough questions for this level, cycle through available ones
+    const selectedQuestions = [];
+    for (let i = 0; i < 10; i++) {
+      const questionIndex = (startIndex + i) % allQuestions.length;
+      selectedQuestions.push(allQuestions[questionIndex]);
+    }
+    
+    return selectedQuestions;
+  }
+
+  private getAllQuestions(topic: string) {
+    const questionSets: Record<string, any[]> = {
+      'JavaScript': [
+        // Level 0 (Beginner) - Questions 0-9
+        {
+          question: 'Which keyword is used to declare a variable in JavaScript?',
+          options: ['var', 'variable', 'declare', 'let'],
+          correct: 0,
+          explanation: 'The "var" keyword is the traditional way to declare variables in JavaScript, though "let" and "const" are now preferred.'
+        },
+        {
+          question: 'What does "console.log()" do in JavaScript?',
+          options: ['Creates a new variable', 'Prints output to the console', 'Defines a function', 'Imports a library'],
+          correct: 1,
+          explanation: 'console.log() is used to output information to the browser\'s console for debugging purposes.'
+        },
+        {
+          question: 'Which symbol is used for single-line comments in JavaScript?',
+          options: ['#', '//', '/*', '--'],
+          correct: 1,
+          explanation: 'Double forward slashes (//) are used for single-line comments in JavaScript.'
+        },
+        {
+          question: 'What is the correct way to write a JavaScript string?',
+          options: ['"Hello World"', '(Hello World)', '[Hello World]', '{Hello World}'],
+          correct: 0,
+          explanation: 'Strings in JavaScript are enclosed in quotes (single or double).'
+        },
+        {
+          question: 'Which operator is used for addition in JavaScript?',
+          options: ['add', '+', 'plus', '&'],
+          correct: 1,
+          explanation: 'The plus sign (+) is used for addition in JavaScript.'
+        },
+        {
+          question: 'What is the correct file extension for JavaScript files?',
+          options: ['.java', '.js', '.javascript', '.script'],
+          correct: 1,
+          explanation: 'JavaScript files use the .js extension.'
+        },
+        {
+          question: 'Which of these is a JavaScript data type?',
+          options: ['text', 'number', 'character', 'decimal'],
+          correct: 1,
+          explanation: 'Number is one of the primitive data types in JavaScript.'
+        },
+        {
+          question: 'How do you create a function in JavaScript?',
+          options: ['function myFunction()', 'create myFunction()', 'def myFunction()', 'func myFunction()'],
+          correct: 0,
+          explanation: 'Functions in JavaScript are declared using the "function" keyword.'
+        },
+        {
+          question: 'What does "true" and "false" represent in JavaScript?',
+          options: ['Strings', 'Numbers', 'Boolean values', 'Objects'],
+          correct: 2,
+          explanation: 'True and false are boolean values representing logical states.'
+        },
+        {
+          question: 'Which method is used to get the length of a string?',
+          options: ['size()', 'length', 'count()', 'getLength()'],
+          correct: 1,
+          explanation: 'The length property returns the number of characters in a string.'
+        },
+
+        // Level 1 (Beginner) - Questions 10-19
+        {
+          question: 'What is the output of typeof null in JavaScript?',
+          options: ['null', 'undefined', 'object', 'boolean'],
+          correct: 2,
+          explanation: 'typeof null returns "object" due to a historical bug in JavaScript that has been kept for backward compatibility.'
+        },
+        {
+          question: 'Which method adds an element to the end of an array?',
+          options: ['append()', 'push()', 'add()', 'insert()'],
+          correct: 1,
+          explanation: 'The push() method adds one or more elements to the end of an array.'
+        },
+        {
+          question: 'What is the difference between let and var?',
+          options: ['No difference', 'let has block scope, var has function scope', 'var is newer', 'let is faster'],
+          correct: 1,
+          explanation: 'let has block scope while var has function scope, making let safer to use.'
+        },
+        {
+          question: 'How do you write an if statement in JavaScript?',
+          options: ['if i = 5', 'if (i == 5)', 'if i == 5 then', 'if i equals 5'],
+          correct: 1,
+          explanation: 'If statements in JavaScript use parentheses around the condition.'
+        },
+        {
+          question: 'Which loop runs at least once?',
+          options: ['for loop', 'while loop', 'do-while loop', 'foreach loop'],
+          correct: 2,
+          explanation: 'A do-while loop executes the code block once before checking the condition.'
+        },
+        {
+          question: 'What does the === operator do?',
+          options: ['Assignment', 'Loose equality', 'Strict equality', 'Not equal'],
+          correct: 2,
+          explanation: 'The === operator checks for strict equality (both value and type must match).'
+        },
+        {
+          question: 'How do you access the first element of an array called "arr"?',
+          options: ['arr[1]', 'arr[0]', 'arr.first()', 'arr.get(0)'],
+          correct: 1,
+          explanation: 'Arrays in JavaScript are zero-indexed, so the first element is at index 0.'
+        },
+        {
+          question: 'Which method removes the last element from an array?',
+          options: ['pop()', 'remove()', 'delete()', 'shift()'],
+          correct: 0,
+          explanation: 'The pop() method removes and returns the last element of an array.'
+        },
+        {
+          question: 'What is the correct way to write a JavaScript object?',
+          options: ['var obj = (name: "John")', 'var obj = {name: "John"}', 'var obj = [name: "John"]', 'var obj = <name: "John">'],
+          correct: 1,
+          explanation: 'JavaScript objects are written with curly braces and key-value pairs.'
+        },
+        {
+          question: 'How do you call a function named "myFunction"?',
+          options: ['call myFunction()', 'myFunction()', 'execute myFunction()', 'run myFunction()'],
+          correct: 1,
+          explanation: 'Functions are called by writing their name followed by parentheses.'
+        },
+
+        // Level 2 (Intermediate) - Questions 20-29
+        {
+          question: 'What is a closure in JavaScript?',
+          options: ['A way to close files', 'A function with access to outer scope', 'A loop structure', 'An error handling method'],
+          correct: 1,
+          explanation: 'A closure is a function that has access to variables in its outer (enclosing) scope even after the outer function returns.'
+        },
+        {
+          question: 'What does the "this" keyword refer to?',
+          options: ['The current function', 'The global object', 'The object that owns the method', 'The previous element'],
+          correct: 2,
+          explanation: 'The "this" keyword refers to the object that owns the method being executed.'
+        },
+        {
+          question: 'How do you handle asynchronous operations in modern JavaScript?',
+          options: ['callbacks only', 'promises only', 'async/await', 'setTimeout only'],
+          correct: 2,
+          explanation: 'async/await is the modern way to handle asynchronous operations, built on top of promises.'
+        },
+        {
+          question: 'What is event bubbling?',
+          options: ['Creating new events', 'Events moving up the DOM tree', 'Deleting events', 'Events moving down the DOM tree'],
+          correct: 1,
+          explanation: 'Event bubbling is when an event starts from the target element and bubbles up through its ancestors.'
+        },
+        {
+          question: 'Which method creates a new array with all elements that pass a test?',
+          options: ['forEach()', 'map()', 'filter()', 'reduce()'],
+          correct: 2,
+          explanation: 'The filter() method creates a new array with elements that pass the provided test function.'
+        },
+        {
+          question: 'What is the difference between == and ===?',
+          options: ['No difference', '== is faster', '=== checks type and value, == performs type coercion', '== is newer'],
+          correct: 2,
+          explanation: '=== performs strict comparison while == performs type coercion before comparison.'
+        },
+        {
+          question: 'How do you create a promise in JavaScript?',
+          options: ['new Promise()', 'Promise.create()', 'makePromise()', 'createPromise()'],
+          correct: 0,
+          explanation: 'Promises are created using the Promise constructor with new Promise().'
+        },
+        {
+          question: 'What does the spread operator (...) do?',
+          options: ['Multiplies numbers', 'Spreads array elements', 'Creates functions', 'Handles errors'],
+          correct: 1,
+          explanation: 'The spread operator expands array elements or object properties.'
+        },
+        {
+          question: 'Which method transforms each element of an array?',
+          options: ['filter()', 'map()', 'reduce()', 'forEach()'],
+          correct: 1,
+          explanation: 'The map() method creates a new array by transforming each element with a provided function.'
+        },
+        {
+          question: 'What is destructuring in JavaScript?',
+          options: ['Deleting objects', 'Extracting values from arrays/objects', 'Creating new variables', 'Combining arrays'],
+          correct: 1,
+          explanation: 'Destructuring allows extracting values from arrays or properties from objects into distinct variables.'
+        },
+
+        // Level 3 (Intermediate) - Questions 30-39
+        {
+          question: 'What is the purpose of Promise.all()?',
+          options: ['Run promises sequentially', 'Run promises in parallel and wait for all', 'Cancel all promises', 'Create new promises'],
+          correct: 1,
+          explanation: 'Promise.all() runs multiple promises in parallel and resolves when all of them complete.'
+        },
+        {
+          question: 'How do you create a class in ES6?',
+          options: ['function MyClass()', 'class MyClass {}', 'new Class MyClass', 'create class MyClass'],
+          correct: 1,
+          explanation: 'ES6 introduced the class keyword for creating classes in JavaScript.'
+        },
+        {
+          question: 'What does the map() method return?',
+          options: ['The original array', 'A new array', 'A single value', 'Nothing'],
+          correct: 1,
+          explanation: 'The map() method returns a new array with the results of calling a function on every element.'
+        },
+        {
+          question: 'What is hoisting in JavaScript?',
+          options: ['Moving code up', 'Variable and function declarations moved to top of scope', 'Deleting variables', 'Creating new scope'],
+          correct: 1,
+          explanation: 'Hoisting is JavaScript\'s behavior of moving declarations to the top of their scope during compilation.'
+        },
+        {
+          question: 'Which method combines all array elements into a string?',
+          options: ['combine()', 'join()', 'merge()', 'concat()'],
+          correct: 1,
+          explanation: 'The join() method creates and returns a new string by concatenating all array elements.'
+        },
+        {
+          question: 'What is the difference between null and undefined?',
+          options: ['No difference', 'null is assigned, undefined is not initialized', 'undefined is assigned, null is not initialized', 'null is a string'],
+          correct: 1,
+          explanation: 'null is an assigned value representing no value, while undefined means a variable has been declared but not assigned.'
+        },
+        {
+          question: 'How do you check if a property exists in an object?',
+          options: ['obj.hasProperty()', 'obj.exists()', 'obj.hasOwnProperty()', 'obj.contains()'],
+          correct: 2,
+          explanation: 'hasOwnProperty() checks if an object has a specific property as its own (not inherited).'
+        },
+        {
+          question: 'What does the reduce() method do?',
+          options: ['Removes elements', 'Reduces array size', 'Applies function to accumulate single value', 'Sorts array'],
+          correct: 2,
+          explanation: 'reduce() executes a reducer function on each array element, resulting in a single output value.'
+        },
+        {
+          question: 'How do you create an arrow function?',
+          options: ['=> function()', '() => {}', 'arrow function()', 'function => ()'],
+          correct: 1,
+          explanation: 'Arrow functions use the => syntax: () => {} for parameterless or (param) => {} for parameters.'
+        },
+        {
+          question: 'What is the purpose of the bind() method?',
+          options: ['Combine arrays', 'Set the this context', 'Create new objects', 'Handle errors'],
+          correct: 1,
+          explanation: 'bind() creates a new function with a specific this context and optionally preset arguments.'
+        },
+
+        // Level 4 (Advanced) - Questions 40-49
+        {
+          question: 'What is a WeakMap in JavaScript?',
+          options: ['A weak reference map', 'A map with weak keys that can be garbage collected', 'A slow map', 'A temporary map'],
+          correct: 1,
+          explanation: 'WeakMap is a collection where keys are weakly referenced and can be garbage collected when no other references exist.'
+        },
+        {
+          question: 'What are generators in JavaScript?',
+          options: ['Functions that create objects', 'Functions that can pause and resume execution', 'Random number generators', 'Code generators'],
+          correct: 1,
+          explanation: 'Generators are functions that can be paused and resumed, yielding multiple values over time.'
+        },
+        {
+          question: 'What is the Proxy object used for?',
+          options: ['Network requests', 'Intercepting and customizing object operations', 'Creating copies', 'Handling errors'],
+          correct: 1,
+          explanation: 'Proxy allows you to intercept and customize operations performed on objects (property lookup, assignment, etc.).'
+        },
+        {
+          question: 'What is the Symbol primitive type?',
+          options: ['A mathematical symbol', 'A unique identifier', 'A string type', 'A number type'],
+          correct: 1,
+          explanation: 'Symbol is a primitive data type that creates unique identifiers for object properties.'
+        },
+        {
+          question: 'What does the Reflect API provide?',
+          options: ['Object reflection and manipulation', 'Code reflection', 'Performance monitoring', 'Error handling'],
+          correct: 0,
+          explanation: 'Reflect provides methods for interceptable JavaScript operations, similar to Proxy handler methods.'
+        },
+        {
+          question: 'What is the difference between call() and apply()?',
+          options: ['No difference', 'call() takes arguments separately, apply() takes an array', 'apply() is faster', 'call() is newer'],
+          correct: 1,
+          explanation: 'call() takes arguments individually while apply() takes arguments as an array.'
+        },
+        {
+          question: 'What is a service worker?',
+          options: ['A background script for web apps', 'A server worker', 'A database worker', 'A UI worker'],
+          correct: 0,
+          explanation: 'Service workers are scripts that run in the background, enabling features like offline functionality and push notifications.'
+        },
+        {
+          question: 'What is the purpose of Object.freeze()?',
+          options: ['Stop object execution', 'Make object immutable', 'Cool down object', 'Pause object'],
+          correct: 1,
+          explanation: 'Object.freeze() makes an object immutable - you cannot add, delete, or modify its properties.'
+        },
+        {
+          question: 'What is a module in JavaScript?',
+          options: ['A small function', 'A reusable piece of code with its own scope', 'A loop structure', 'An error type'],
+          correct: 1,
+          explanation: 'Modules are reusable pieces of code with their own scope that can export and import functionality.'
+        },
+        {
+          question: 'What is the event loop?',
+          options: ['A loop for events', 'The mechanism that handles asynchronous operations', 'A type of for loop', 'An error handling loop'],
+          correct: 1,
+          explanation: 'The event loop is the mechanism that allows JavaScript to perform non-blocking operations despite being single-threaded.'
+        },
+
+        // Level 5 (Expert) - Questions 50-59
+        {
+          question: 'What is a SharedArrayBuffer?',
+          options: ['A shared array', 'A buffer for sharing memory between workers', 'A network buffer', 'A graphics buffer'],
+          correct: 1,
+          explanation: 'SharedArrayBuffer represents a raw binary data buffer that can be shared between multiple workers.'
+        },
+        {
+          question: 'What is the BigInt type used for?',
+          options: ['Large strings', 'Arbitrarily large integers', 'Big objects', 'Large arrays'],
+          correct: 1,
+          explanation: 'BigInt is a primitive type for representing integers larger than Number.MAX_SAFE_INTEGER.'
+        },
+        {
+          question: 'What is the difference between microtasks and macrotasks?',
+          options: ['Size difference', 'Microtasks have higher priority in event loop', 'No difference', 'Macrotasks are faster'],
+          correct: 1,
+          explanation: 'Microtasks (like Promise callbacks) have higher priority and execute before macrotasks (like setTimeout).'
+        },
+        {
+          question: 'What is optional chaining (?.) used for?',
+          options: ['Creating chains', 'Safely accessing nested properties', 'Chaining functions', 'Creating optional parameters'],
+          correct: 1,
+          explanation: 'Optional chaining allows safe access to nested object properties without throwing errors if intermediate properties are null/undefined.'
+        },
+        {
+          question: 'What is the nullish coalescing operator (??)?',
+          options: ['Null checker', 'Returns right operand when left is null/undefined', 'Null creator', 'Null remover'],
+          correct: 1,
+          explanation: 'The nullish coalescing operator (??) returns the right operand when the left operand is null or undefined.'
+        },
+        {
+          question: 'What is top-level await?',
+          options: ['Await at function top', 'Using await outside async functions in modules', 'Fastest await', 'Await with highest priority'],
+          correct: 1,
+          explanation: 'Top-level await allows using await directly in modules without wrapping in an async function.'
+        },
+        {
+          question: 'What is a FinalizationRegistry?',
+          options: ['Final registry', 'Registry for cleanup callbacks when objects are garbage collected', 'Registration system', 'Final validation'],
+          correct: 1,
+          explanation: 'FinalizationRegistry allows registering cleanup callbacks that are called when objects are garbage collected.'
+        },
+        {
+          question: 'What is the purpose of WeakRef?',
+          options: ['Weak references to objects', 'Weak variable references', 'Reference counting', 'Memory management'],
+          correct: 0,
+          explanation: 'WeakRef creates a weak reference to an object that doesn\'t prevent garbage collection.'
+        },
+        {
+          question: 'What is a private field in JavaScript classes?',
+          options: ['Hidden field', 'Field with # prefix that is truly private', 'Protected field', 'Internal field'],
+          correct: 1,
+          explanation: 'Private fields use # prefix and are truly private, not accessible outside the class.'
+        },
+        {
+          question: 'What is the Temporal API?',
+          options: ['Time travel API', 'Modern date/time API proposal', 'Temporary storage API', 'Template API'],
+          correct: 1,
+          explanation: 'Temporal is a proposed modern API for working with dates and times, addressing issues with the Date object.'
+        }
+      ],
+
+      'Python': [
+        // Level 0 (Beginner) - Questions 0-9
+        {
+          question: 'What is the output of print("Hello World")?',
+          options: ['Hello World', '"Hello World"', 'print("Hello World")', 'Error'],
+          correct: 0,
+          explanation: 'The print() function outputs the string without quotes to the console.'
+        },
+        {
+          question: 'Which symbol is used for comments in Python?',
+          options: ['//', '#', '/*', '--'],
+          correct: 1,
+          explanation: 'The hash symbol (#) is used for single-line comments in Python.'
+        },
+        {
+          question: 'What is the correct file extension for Python files?',
+          options: ['.python', '.py', '.pt', '.pyt'],
+          correct: 1,
+          explanation: 'Python files use the .py extension.'
+        },
+        {
+          question: 'How do you create a variable in Python?',
+          options: ['var x = 5', 'x = 5', 'int x = 5', 'create x = 5'],
+          correct: 1,
+          explanation: 'Python uses simple assignment without type declarations: x = 5'
+        },
+        {
+          question: 'Which of these is a Python data type?',
+          options: ['string', 'int', 'float', 'All of the above'],
+          correct: 3,
+          explanation: 'Python has string, int, float, and many other built-in data types.'
+        },
+        {
+          question: 'How do you get user input in Python?',
+          options: ['input()', 'get()', 'read()', 'scan()'],
+          correct: 0,
+          explanation: 'The input() function is used to get user input in Python.'
+        },
+        {
+          question: 'What does len() function do?',
+          options: ['Lengthens a string', 'Returns the length of an object', 'Creates a list', 'Deletes characters'],
+          correct: 1,
+          explanation: 'len() returns the number of items in an object (string, list, etc.).'
+        },
+        {
+          question: 'How do you create a list in Python?',
+          options: ['list = (1, 2, 3)', 'list = [1, 2, 3]', 'list = {1, 2, 3}', 'list = <1, 2, 3>'],
+          correct: 1,
+          explanation: 'Lists in Python are created using square brackets [].'
+        },
+        {
+          question: 'Which operator is used for exponentiation in Python?',
+          options: ['^', '**', 'exp', 'pow'],
+          correct: 1,
+          explanation: 'The ** operator is used for exponentiation in Python (e.g., 2**3 = 8).'
+        },
+        {
+          question: 'What is the correct way to check if two values are equal?',
+          options: ['x = y', 'x == y', 'x === y', 'x eq y'],
+          correct: 1,
+          explanation: 'The == operator is used for equality comparison in Python.'
+        },
+
+        // Level 1 (Beginner) - Questions 10-19
+        {
+          question: 'What is the output of type([])?',
+          options: ['<class \'array\'>', '<class \'list\'>', '<class \'tuple\'>', '<class \'dict\'>'],
+          correct: 1,
+          explanation: 'Empty square brackets [] create a list in Python, so type([]) returns <class \'list\'>.'
+        },
+        {
+          question: 'How do you create a virtual environment in Python?',
+          options: ['pip install venv', 'python -m venv myenv', 'create-env myenv', 'virtualenv only'],
+          correct: 1,
+          explanation: 'python -m venv is the standard way to create virtual environments in Python 3.3+.'
+        },
+        {
+          question: 'What is the difference between a list and a tuple?',
+          options: ['Lists are ordered, tuples are not', 'Lists are mutable, tuples are immutable', 'Lists use [], tuples use {}', 'No difference'],
+          correct: 1,
+          explanation: 'Lists are mutable (can be changed) while tuples are immutable (cannot be changed after creation).'
+        },
+        {
+          question: 'Which method adds an item to the end of a list?',
+          options: ['add()', 'append()', 'insert()', 'Both append() and insert()'],
+          correct: 3,
+          explanation: 'Both append() (adds to end) and insert() (adds at specific index) can add items to a list.'
+        },
+        {
+          question: 'How do you create a dictionary in Python?',
+          options: ['dict = [key: value]', 'dict = {key: value}', 'dict = (key: value)', 'dict = <key: value>'],
+          correct: 1,
+          explanation: 'Dictionaries in Python are created using curly braces with key-value pairs.'
+        },
+        {
+          question: 'What does the range() function do?',
+          options: ['Creates a list', 'Generates a sequence of numbers', 'Finds the range of values', 'Sorts numbers'],
+          correct: 1,
+          explanation: 'range() generates a sequence of numbers, commonly used in for loops.'
+        },
+        {
+          question: 'How do you write a for loop in Python?',
+          options: ['for i in range(5):', 'for (i = 0; i < 5; i++):', 'for i = 1 to 5:', 'loop i in 5:'],
+          correct: 0,
+          explanation: 'Python for loops use the "for item in iterable:" syntax.'
+        },
+        {
+          question: 'What is indentation used for in Python?',
+          options: ['Decoration', 'Defining code blocks', 'Comments', 'Variable names'],
+          correct: 1,
+          explanation: 'Python uses indentation to define code blocks instead of curly braces.'
+        },
+        {
+          question: 'How do you define a function in Python?',
+          options: ['function myFunc():', 'def myFunc():', 'func myFunc():', 'define myFunc():'],
+          correct: 1,
+          explanation: 'Functions in Python are defined using the "def" keyword.'
+        },
+        {
+          question: 'What does the split() method do?',
+          options: ['Joins strings', 'Splits a string into a list', 'Removes characters', 'Counts characters'],
+          correct: 1,
+          explanation: 'split() divides a string into a list based on a specified separator.'
+        },
+
+        // Level 2 (Intermediate) - Questions 20-29
+        {
+          question: 'What is a lambda function in Python?',
+          options: ['A named function', 'An anonymous function', 'A class method', 'A built-in function'],
+          correct: 1,
+          explanation: 'Lambda functions are anonymous functions defined using the lambda keyword.'
+        },
+        {
+          question: 'How do you import a specific function from a module?',
+          options: ['import module.function', 'from module import function', 'include module.function', 'using module.function'],
+          correct: 1,
+          explanation: 'Use "from module import function" to import specific functions from a module.'
+        },
+        {
+          question: 'What is the purpose of __init__ method?',
+          options: ['Initialize a class', 'Initialize an object', 'Import modules', 'Initialize variables'],
+          correct: 1,
+          explanation: '__init__ is the constructor method that initializes new objects when they are created.'
+        },
+        {
+          question: 'What is list comprehension?',
+          options: ['Understanding lists', 'A concise way to create lists', 'List documentation', 'List comparison'],
+          correct: 1,
+          explanation: 'List comprehension provides a concise way to create lists using a single line of code.'
+        },
+        {
+          question: 'How do you handle exceptions in Python?',
+          options: ['try/catch', 'try/except', 'catch/throw', 'handle/error'],
+          correct: 1,
+          explanation: 'Python uses try/except blocks for exception handling.'
+        },
+        {
+          question: 'What is the difference between is and ==?',
+          options: ['No difference', 'is checks identity, == checks equality', '== checks identity, is checks equality', 'is is faster'],
+          correct: 1,
+          explanation: '"is" checks if two variables refer to the same object, while "==" checks if values are equal.'
+        },
+        {
+          question: 'What does the enumerate() function do?',
+          options: ['Counts items', 'Returns index and value pairs', 'Numbers items', 'Lists items'],
+          correct: 1,
+          explanation: 'enumerate() returns pairs of index and value for each item in an iterable.'
+        },
+        {
+          question: 'How do you create a class in Python?',
+          options: ['class MyClass:', 'create class MyClass:', 'new class MyClass:', 'define class MyClass:'],
+          correct: 0,
+          explanation: 'Classes in Python are defined using the "class" keyword followed by a colon.'
+        },
+        {
+          question: 'What is the purpose of self in Python methods?',
+          options: ['Self-reference', 'Refers to the instance of the class', 'A keyword', 'Self-documentation'],
+          correct: 1,
+          explanation: '"self" refers to the instance of the class and is used to access instance variables and methods.'
+        },
+        {
+          question: 'What does the zip() function do?',
+          options: ['Compresses files', 'Combines multiple iterables', 'Creates archives', 'Speeds up code'],
+          correct: 1,
+          explanation: 'zip() combines multiple iterables (lists, tuples, etc.) element by element.'
+        },
+
+        // Level 3 (Intermediate) - Questions 30-39
+        {
+          question: 'What is the difference between shallow and deep copy?',
+          options: ['Depth of copying', 'Shallow copies references, deep copies objects recursively', 'Speed difference', 'Memory usage'],
+          correct: 1,
+          explanation: 'Shallow copy creates a new object but references to nested objects, deep copy creates new objects recursively.'
+        },
+        {
+          question: 'What is method overriding in Python?',
+          options: ['Creating new methods', 'Redefining parent class methods in child class', 'Deleting methods', 'Copying methods'],
+          correct: 1,
+          explanation: 'Method overriding allows a child class to provide a specific implementation of a method defined in its parent class.'
+        },
+        {
+          question: 'What do *args and **kwargs mean?',
+          options: ['Variable arguments and keyword arguments', 'Multiplication and power', 'Pointers', 'Comments'],
+          correct: 0,
+          explanation: '*args allows a function to accept any number of positional arguments, **kwargs allows any number of keyword arguments.'
+        },
+        {
+          question: 'What is a decorator in Python?',
+          options: ['A design pattern', 'A function that modifies another function', 'A class method', 'An import statement'],
+          correct: 1,
+          explanation: 'A decorator is a function that takes another function and extends its behavior without explicitly modifying it.'
+        },
+        {
+          question: 'What is the purpose of the with statement?',
+          options: ['Conditional execution', 'Context management', 'Loop control', 'Function definition'],
+          correct: 1,
+          explanation: 'The with statement is used for context management, ensuring proper resource cleanup.'
+        },
+        {
+          question: 'What is a generator in Python?',
+          options: ['A function that generates code', 'A function that yields values one at a time', 'A random number generator', 'A class generator'],
+          correct: 1,
+          explanation: 'A generator is a function that yields values one at a time, allowing for memory-efficient iteration.'
+        },
+        {
+          question: 'What does the yield keyword do?',
+          options: ['Returns a value', 'Pauses function execution and returns a value', 'Stops execution', 'Creates variables'],
+          correct: 1,
+          explanation: 'yield pauses the function execution and returns a value, allowing the function to resume later.'
+        },
+        {
+          question: 'What is multiple inheritance?',
+          options: ['Inheriting multiple times', 'A class inheriting from multiple parent classes', 'Multiple objects', 'Multiple methods'],
+          correct: 1,
+          explanation: 'Multiple inheritance allows a class to inherit attributes and methods from multiple parent classes.'
+        },
+        {
+          question: 'What is the purpose of __str__ method?',
+          options: ['String conversion', 'Returns string representation of object', 'Creates strings', 'String manipulation'],
+          correct: 1,
+          explanation: '__str__ method returns a human-readable string representation of an object.'
+        },
+        {
+          question: 'What is a property in Python?',
+          options: ['Object attribute', 'A way to access methods like attributes', 'Class variable', 'Instance variable'],
+          correct: 1,
+          explanation: 'Properties allow you to access methods like attributes, providing getter/setter functionality.'
+        },
+
+        // Level 4 (Advanced) - Questions 40-49
+        {
+          question: 'What is the Global Interpreter Lock (GIL)?',
+          options: ['Global variable lock', 'Mechanism that prevents multiple threads from executing Python code simultaneously', 'Global import lock', 'Global iteration lock'],
+          correct: 1,
+          explanation: 'GIL is a mutex that protects access to Python objects, preventing multiple threads from executing Python bytecodes simultaneously.'
+        },
+        {
+          question: 'What is the difference between multiprocessing and multithreading?',
+          options: ['No difference', 'Multiprocessing uses separate processes, multithreading uses threads within a process', 'Speed difference', 'Memory usage'],
+          correct: 1,
+          explanation: 'Multiprocessing creates separate processes with their own memory space, while multithreading creates threads within the same process.'
+        },
+        {
+          question: 'What is a metaclass in Python?',
+          options: ['A meta description', 'A class whose instances are classes', 'A parent class', 'A class method'],
+          correct: 1,
+          explanation: 'A metaclass is a class whose instances are classes themselves, controlling how classes are created.'
+        },
+        {
+          question: 'What is the purpose of __slots__?',
+          options: ['Creating slots', 'Restricting instance attributes and saving memory', 'Method slots', 'Time slots'],
+          correct: 1,
+          explanation: '__slots__ restricts the attributes an instance can have and can save memory by avoiding __dict__.'
+        },
+        {
+          question: 'What is monkey patching?',
+          options: ['Patching monkeys', 'Dynamically modifying classes or modules at runtime', 'Bug fixing', 'Code patching'],
+          correct: 1,
+          explanation: 'Monkey patching is dynamically modifying a class or module at runtime to change or extend its behavior.'
+        },
+        {
+          question: 'What is the difference between __new__ and __init__?',
+          options: ['No difference', '__new__ creates the instance, __init__ initializes it', '__init__ creates, __new__ initializes', 'Both create instances'],
+          correct: 1,
+          explanation: '__new__ is responsible for creating the instance, while __init__ initializes the already created instance.'
+        },
+        {
+          question: 'What is a context manager?',
+          options: ['Context handler', 'Object that defines runtime context for executing a block of code', 'Context switcher', 'Context creator'],
+          correct: 1,
+          explanation: 'A context manager defines the runtime context for executing a block of code, typically used with the "with" statement.'
+        },
+        {
+          question: 'What is the purpose of asyncio?',
+          options: ['Synchronous programming', 'Asynchronous programming framework', 'Input/output operations', 'Async imports'],
+          correct: 1,
+          explanation: 'asyncio is a library for writing concurrent code using async/await syntax for asynchronous programming.'
+        },
+        {
+          question: 'What is a descriptor in Python?',
+          options: ['Object description', 'Object that defines how attribute access is handled', 'Class descriptor', 'Method descriptor'],
+          correct: 1,
+          explanation: 'A descriptor is an object that defines how attribute access is handled through __get__, __set__, and __delete__ methods.'
+        },
+        {
+          question: 'What is the difference between staticmethod and classmethod?',
+          options: ['No difference', 'staticmethod has no access to class/instance, classmethod receives class as first argument', 'Speed difference', 'staticmethod is newer'],
+          correct: 1,
+          explanation: 'staticmethod has no access to class or instance data, while classmethod receives the class as the first argument.'
+        },
+
+        // Level 5 (Expert) - Questions 50-59
+        {
+          question: 'What is the difference between CPython and PyPy?',
+          options: ['No difference', 'CPython is the standard implementation, PyPy is a JIT-compiled implementation', 'CPython is faster', 'PyPy is older'],
+          correct: 1,
+          explanation: 'CPython is the standard Python implementation written in C, while PyPy is an alternative implementation with JIT compilation for better performance.'
+        },
+        {
+          question: 'What is the purpose of __new__ method?',
+          options: ['Initialize objects', 'Create and return new instances', 'Update objects', 'Delete objects'],
+          correct: 1,
+          explanation: '__new__ is responsible for creating and returning a new instance of a class before __init__ is called.'
+        },
+        {
+          question: 'What is memory profiling in Python?',
+          options: ['Memory allocation', 'Analyzing memory usage of Python programs', 'Memory management', 'Memory optimization'],
+          correct: 1,
+          explanation: 'Memory profiling involves analyzing how much memory Python programs use and identifying memory bottlenecks.'
+        },
+        {
+          question: 'What is a weakref in Python?',
+          options: ['Weak reference', 'Reference that doesn\'t prevent garbage collection', 'Weak variable', 'Weak import'],
+          correct: 1,
+          explanation: 'A weak reference is a reference to an object that doesn\'t prevent the object from being garbage collected.'
+        },
+        {
+          question: 'What is the purpose of __call__ method?',
+          options: ['Call functions', 'Make instances callable like functions', 'Method calling', 'Function calls'],
+          correct: 1,
+          explanation: '__call__ method allows instances of a class to be called like functions.'
+        },
+        {
+          question: 'What is bytecode in Python?',
+          options: ['Binary code', 'Intermediate representation of Python code', 'Byte operations', 'Code bytes'],
+          correct: 1,
+          explanation: 'Bytecode is the intermediate representation that Python source code is compiled to before execution by the Python virtual machine.'
+        },
+        {
+          question: 'What is the difference between __getattr__ and __getattribute__?',
+          options: ['No difference', '__getattr__ is called when attribute is not found, __getattribute__ is called for every attribute access', 'Speed difference', '__getattr__ is newer'],
+          correct: 1,
+          explanation: '__getattribute__ is called for every attribute access, while __getattr__ is only called when the attribute is not found through normal lookup.'
+        },
+        {
+          question: 'What is the purpose of sys.intern()?',
+          options: ['Internal system', 'Intern strings for memory optimization', 'System internals', 'Internal functions'],
+          correct: 1,
+          explanation: 'sys.intern() interns strings, which can save memory when the same string is used multiple times.'
+        },
+        {
+          question: 'What is a coroutine in Python?',
+          options: ['Core routine', 'Function that can be paused and resumed', 'Routine core', 'Cooperative routine'],
+          correct: 1,
+          explanation: 'A coroutine is a function that can be paused and resumed, allowing for cooperative multitasking.'
+        },
+        {
+          question: 'What is the purpose of __slots__ optimization?',
+          options: ['Slot optimization', 'Reduces memory usage by avoiding __dict__', 'Speed optimization', 'Slot management'],
+          correct: 1,
+          explanation: '__slots__ optimization reduces memory usage by storing instance variables in a fixed-size array instead of a dictionary.'
+        }
+      ],
+
+      'React': [
+        // Level 0 (Beginner) - Questions 0-9
+        {
+          question: 'What is React?',
+          options: ['A database', 'A JavaScript library for building user interfaces', 'A server framework', 'A CSS framework'],
+          correct: 1,
+          explanation: 'React is a JavaScript library developed by Facebook for building user interfaces, particularly web applications.'
+        },
+        {
+          question: 'What is JSX?',
+          options: ['A new programming language', 'JavaScript XML - a syntax extension', 'A CSS framework', 'A database query language'],
+          correct: 1,
+          explanation: 'JSX is a syntax extension for JavaScript that allows you to write HTML-like code in your JavaScript files.'
+        },
+        {
+          question: 'How do you create a React component?',
+          options: ['function MyComponent() {}', 'class MyComponent extends React.Component {}', 'const MyComponent = () => {}', 'All of the above'],
+          correct: 3,
+          explanation: 'React components can be created as function components, class components, or arrow function components.'
+        },
+        {
+          question: 'What is a prop in React?',
+          options: ['A property passed to components', 'A state variable', 'A method', 'A CSS class'],
+          correct: 0,
+          explanation: 'Props (properties) are arguments passed into React components to pass data from parent to child components.'
+        },
+        {
+          question: 'How do you display a variable in JSX?',
+          options: ['{{variable}}', '{variable}', '(variable)', '[variable]'],
+          correct: 1,
+          explanation: 'Variables in JSX are displayed using curly braces: {variable}'
+        },
+        {
+          question: 'What is the virtual DOM?',
+          options: ['A copy of the real DOM kept in memory', 'A new type of HTML', 'A CSS framework', 'A database'],
+          correct: 0,
+          explanation: 'The virtual DOM is a JavaScript representation of the real DOM kept in memory and synced with the real DOM.'
+        },
+        {
+          question: 'How do you handle events in React?',
+          options: ['onclick="handler"', 'onClick={handler}', 'on-click={handler}', 'click={handler}'],
+          correct: 1,
+          explanation: 'React uses camelCase event handlers like onClick={handler} instead of lowercase HTML attributes.'
+        },
+        {
+          question: 'What is the correct way to import React?',
+          options: ['import React from "react"', 'include React', 'require("react")', 'import "react"'],
+          correct: 0,
+          explanation: 'React is imported using ES6 import syntax: import React from "react"'
+        },
+        {
+          question: 'How do you create a list in React?',
+          options: ['Using for loops', 'Using map() method', 'Using forEach()', 'Using while loops'],
+          correct: 1,
+          explanation: 'Lists in React are typically created using the map() method to transform arrays into JSX elements.'
+        },
+        {
+          question: 'What is a key prop used for?',
+          options: ['Styling', 'Identifying list items uniquely', 'Event handling', 'State management'],
+          correct: 1,
+          explanation: 'Key props help React identify which list items have changed, been added, or removed for efficient re-rendering.'
+        },
+
+        // Level 1 (Beginner) - Questions 10-19
+        {
+          question: 'Which hook is used to manage state in functional components?',
+          options: ['useEffect', 'useState', 'useContext', 'useReducer'],
+          correct: 1,
+          explanation: 'useState is the primary hook for managing state in functional React components.'
+        },
+        {
+          question: 'What is the purpose of useEffect hook?',
+          options: ['To manage component state', 'To handle side effects', 'To create context', 'To optimize performance'],
+          correct: 1,
+          explanation: 'useEffect is used to handle side effects like API calls, subscriptions, or manually changing the DOM.'
+        },
+        {
+          question: 'How do you pass data from parent to child component?',
+          options: ['Through state', 'Through props', 'Through context', 'Through refs'],
+          correct: 1,
+          explanation: 'Props (properties) are the primary way to pass data from parent components to child components in React.'
+        },
+        {
+          question: 'What is conditional rendering in React?',
+          options: ['Rendering based on conditions', 'Rendering components conditionally', 'Using if statements in JSX', 'All of the above'],
+          correct: 3,
+          explanation: 'Conditional rendering means displaying different content based on certain conditions, often using ternary operators or logical AND.'
+        },
+        {
+          question: 'How do you update state in a functional component?',
+          options: ['this.setState()', 'setState()', 'Using the setter function from useState', 'Directly modifying state'],
+          correct: 2,
+          explanation: 'In functional components, you update state using the setter function returned by useState hook.'
+        },
+        {
+          question: 'What is the difference between controlled and uncontrolled components?',
+          options: ['No difference', 'Controlled components have React-managed state, uncontrolled use DOM state', 'Controlled are faster', 'Uncontrolled are newer'],
+          correct: 1,
+          explanation: 'Controlled components have their state managed by React, while uncontrolled components manage their own state internally.'
+        },
+        {
+          question: 'How do you handle form submission in React?',
+          options: ['onSubmit={handleSubmit}', 'onsubmit="handleSubmit"', 'submit={handleSubmit}', 'form-submit={handleSubmit}'],
+          correct: 0,
+          explanation: 'Form submission in React is handled using the onSubmit event handler on the form element.'
+        },
+        {
+          question: 'What is the purpose of React.Fragment?',
+          options: ['Creating fragments', 'Grouping elements without extra DOM nodes', 'Breaking components', 'Fragment management'],
+          correct: 1,
+          explanation: 'React.Fragment allows you to group multiple elements without adding an extra DOM node.'
+        },
+        {
+          question: 'How do you prevent default behavior in React events?',
+          options: ['event.preventDefault()', 'return false', 'event.stop()', 'event.cancel()'],
+          correct: 0,
+          explanation: 'Use event.preventDefault() to prevent the default behavior of events in React.'
+        },
+        {
+          question: 'What is the children prop?',
+          options: ['Child components', 'Content passed between component tags', 'Component children', 'Nested elements'],
+          correct: 1,
+          explanation: 'The children prop contains the content passed between the opening and closing tags of a component.'
+        },
+
+        // Level 2 (Intermediate) - Questions 20-29
+        {
+          question: 'What is the dependency array in useEffect?',
+          options: ['Array of dependencies', 'Controls when effect runs', 'List of variables to watch', 'All of the above'],
+          correct: 3,
+          explanation: 'The dependency array controls when useEffect runs by specifying which values the effect depends on.'
+        },
+        {
+          question: 'How do you create a custom hook?',
+          options: ['function useCustom() {}', 'const useCustom = () => {}', 'Both are correct', 'class useCustom {}'],
+          correct: 2,
+          explanation: 'Custom hooks are JavaScript functions that start with "use" and can call other hooks.'
+        },
+        {
+          question: 'What is useContext hook used for?',
+          options: ['Creating context', 'Consuming context values', 'Context management', 'Context creation'],
+          correct: 1,
+          explanation: 'useContext hook is used to consume values from a React context without wrapping components in Consumer.'
+        },
+        {
+          question: 'What is prop drilling?',
+          options: ['Drilling holes in props', 'Passing props through multiple component layers', 'Prop optimization', 'Prop validation'],
+          correct: 1,
+          explanation: 'Prop drilling is the process of passing props through multiple component layers to reach deeply nested components.'
+        },
+        {
+          question: 'How do you optimize React component re-renders?',
+          options: ['React.memo', 'useMemo', 'useCallback', 'All of the above'],
+          correct: 3,
+          explanation: 'React.memo, useMemo, and useCallback are all optimization techniques to prevent unnecessary re-renders.'
+        },
+        {
+          question: 'What is the purpose of React.memo?',
+          options: ['Memory management', 'Memoizing component renders', 'Creating memos', 'Memory optimization'],
+          correct: 1,
+          explanation: 'React.memo is a higher-order component that memoizes the result and skips re-rendering if props haven\'t changed.'
+        },
+        {
+          question: 'When should you use useCallback?',
+          options: ['Always', 'When passing callbacks to optimized child components', 'Never', 'For all functions'],
+          correct: 1,
+          explanation: 'useCallback should be used when passing callbacks to optimized child components to prevent unnecessary re-renders.'
+        },
+        {
+          question: 'What is the difference between useMemo and useCallback?',
+          options: ['No difference', 'useMemo memoizes values, useCallback memoizes functions', 'useMemo is faster', 'useCallback is newer'],
+          correct: 1,
+          explanation: 'useMemo memoizes computed values, while useCallback memoizes function references.'
+        },
+        {
+          question: 'How do you handle errors in React components?',
+          options: ['try/catch', 'Error boundaries', 'componentDidCatch', 'Both Error boundaries and componentDidCatch'],
+          correct: 3,
+          explanation: 'Error boundaries and componentDidCatch are used to handle errors in React component trees.'
+        },
+        {
+          question: 'What is the purpose of useRef hook?',
+          options: ['Creating references', 'Accessing DOM elements directly', 'Storing mutable values', '2 and 3'],
+          correct: 3,
+          explanation: 'useRef can be used to access DOM elements directly and store mutable values that persist across renders.'
+        },
+
+        // Level 3 (Intermediate) - Questions 30-39
+        {
+          question: 'What is useReducer hook used for?',
+          options: ['Reducing arrays', 'Managing complex state logic', 'Performance optimization', 'Reducing components'],
+          correct: 1,
+          explanation: 'useReducer is used for managing complex state logic, especially when state updates depend on previous state.'
+        },
+        {
+          question: 'What are Higher-Order Components (HOCs)?',
+          options: ['High-level components', 'Functions that take a component and return a new component', 'Complex components', 'Parent components'],
+          correct: 1,
+          explanation: 'HOCs are functions that take a component and return a new component with additional functionality.'
+        },
+        {
+          question: 'What is the render prop pattern?',
+          options: ['Rendering props', 'A technique for sharing code using a prop whose value is a function', 'Prop rendering', 'Component rendering'],
+          correct: 1,
+          explanation: 'Render props is a technique for sharing code between components using a prop whose value is a function.'
+        },
+        {
+          question: 'How do you implement lazy loading in React?',
+          options: ['React.lazy()', 'import()', 'Suspense', 'All of the above'],
+          correct: 3,
+          explanation: 'Lazy loading in React is implemented using React.lazy() with dynamic import() and Suspense for loading states.'
+        },
+        {
+          question: 'What is React Suspense used for?',
+          options: ['Suspending components', 'Handling loading states for lazy components', 'Pausing execution', 'Suspense management'],
+          correct: 1,
+          explanation: 'Suspense is used to handle loading states while waiting for lazy-loaded components or data to load.'
+        },
+        {
+          question: 'What is the purpose of React.StrictMode?',
+          options: ['Strict typing', 'Highlighting potential problems in development', 'Performance mode', 'Production mode'],
+          correct: 1,
+          explanation: 'StrictMode is a development tool that highlights potential problems and unsafe lifecycles in your application.'
+        },
+        {
+          question: 'How do you share state between sibling components?',
+          options: ['Direct sharing', 'Lifting state up to common parent', 'Using refs', 'Component communication'],
+          correct: 1,
+          explanation: 'State is shared between sibling components by lifting it up to their nearest common parent component.'
+        },
+        {
+          question: 'What is the purpose of useLayoutEffect?',
+          options: ['Layout management', 'Synchronous DOM mutations before browser paint', 'Layout optimization', 'Effect layout'],
+          correct: 1,
+          explanation: 'useLayoutEffect runs synchronously after all DOM mutations but before the browser paints.'
+        },
+        {
+          question: 'How do you handle side effects in React?',
+          options: ['useEffect', 'useLayoutEffect', 'Custom hooks', 'All of the above'],
+          correct: 3,
+          explanation: 'Side effects in React are handled using useEffect, useLayoutEffect, or custom hooks that encapsulate the logic.'
+        },
+        {
+          question: 'What is React Context used for?',
+          options: ['Context switching', 'Sharing data across component tree without prop drilling', 'Component context', 'Context management'],
+          correct: 1,
+          explanation: 'React Context provides a way to share data across the component tree without having to pass props down manually.'
+        },
+
+        // Level 4 (Advanced) - Questions 40-49
+        {
+          question: 'What is React Fiber?',
+          options: ['Fiber optics', 'React\'s reconciliation algorithm', 'Network fiber', 'Component fiber'],
+          correct: 1,
+          explanation: 'React Fiber is the new reconciliation algorithm that enables incremental rendering and better performance.'
+        },
+        {
+          question: 'What is concurrent rendering in React?',
+          options: ['Parallel rendering', 'Ability to interrupt and resume rendering work', 'Concurrent components', 'Multi-threaded rendering'],
+          correct: 1,
+          explanation: 'Concurrent rendering allows React to interrupt and resume rendering work to keep the app responsive.'
+        },
+        {
+          question: 'What is the difference between useLayoutEffect and useEffect?',
+          options: ['No difference', 'useLayoutEffect runs synchronously, useEffect runs asynchronously', 'useLayoutEffect is faster', 'useEffect is newer'],
+          correct: 1,
+          explanation: 'useLayoutEffect runs synchronously after DOM mutations, while useEffect runs asynchronously after render.'
+        },
+        {
+          question: 'What is React reconciliation?',
+          options: ['Component reconciliation', 'Process of updating the DOM efficiently', 'Conflict resolution', 'Data reconciliation'],
+          correct: 1,
+          explanation: 'Reconciliation is React\'s process of efficiently updating the DOM by comparing virtual DOM trees.'
+        },
+        {
+          question: 'How does React\'s diffing algorithm work?',
+          options: ['Compares entire trees', 'Compares trees level by level with heuristics', 'Random comparison', 'Sequential comparison'],
+          correct: 1,
+          explanation: 'React\'s diffing algorithm compares virtual DOM trees level by level using heuristics for efficient updates.'
+        },
+        {
+          question: 'What are React Portals?',
+          options: ['Component portals', 'Way to render children into DOM node outside parent hierarchy', 'Portal components', 'Navigation portals'],
+          correct: 1,
+          explanation: 'Portals provide a way to render children into a DOM node that exists outside the parent component\'s DOM hierarchy.'
+        },
+        {
+          question: 'What is the purpose of React.forwardRef?',
+          options: ['Forward references', 'Passing refs through components', 'Reference forwarding', 'Component forwarding'],
+          correct: 1,
+          explanation: 'forwardRef allows components to pass refs through to child components, useful for accessing DOM elements.'
+        },
+        {
+          question: 'What is React.cloneElement used for?',
+          options: ['Cloning elements', 'Creating new elements with modified props', 'Element duplication', 'Component cloning'],
+          correct: 1,
+          explanation: 'cloneElement creates a new React element using another element as the starting point with modified props.'
+        },
+        {
+          question: 'How do you implement code splitting in React?',
+          options: ['Manual splitting', 'React.lazy() and dynamic imports', 'Code division', 'Component splitting'],
+          correct: 1,
+          explanation: 'Code splitting in React is implemented using React.lazy() with dynamic imports to load components on demand.'
+        },
+        {
+          question: 'What is the React Profiler?',
+          options: ['User profiler', 'Tool for measuring component performance', 'Profile manager', 'Component profiler'],
+          correct: 1,
+          explanation: 'React Profiler is a tool for measuring the performance of React applications and identifying bottlenecks.'
+        },
+
+        // Level 5 (Expert) - Questions 50-59
+        {
+          question: 'What is React\'s time slicing?',
+          options: ['Time management', 'Breaking rendering work into chunks', 'Time optimization', 'Slice timing'],
+          correct: 1,
+          explanation: 'Time slicing allows React to break rendering work into chunks and spread it across multiple frames for better performance.'
+        },
+        {
+          question: 'What is the React Profiler API?',
+          options: ['Profiling API', 'API for measuring component render performance', 'Profile management API', 'Component API'],
+          correct: 1,
+          explanation: 'The Profiler API allows you to programmatically measure the performance of React component trees.'
+        },
+        {
+          question: 'What are React Server Components?',
+          options: ['Server-side components', 'Components that render on the server', 'Component servers', 'Server management'],
+          correct: 1,
+          explanation: 'React Server Components are a new type of component that renders on the server, reducing bundle size and improving performance.'
+        },
+        {
+          question: 'What is startTransition in React 18?',
+          options: ['Starting transitions', 'Marking updates as non-urgent', 'Transition management', 'Component transitions'],
+          correct: 1,
+          explanation: 'startTransition allows you to mark updates as non-urgent, letting React prioritize more important updates.'
+        },
+        {
+          question: 'What is useDeferredValue hook?',
+          options: ['Deferred values', 'Deferring value updates for performance', 'Value management', 'Delayed values'],
+          correct: 1,
+          explanation: 'useDeferredValue allows you to defer updates to less important parts of the UI for better performance.'
+        },
+        {
+          question: 'What is React\'s automatic batching?',
+          options: ['Batch processing', 'Automatically grouping multiple state updates', 'Auto batching', 'Batch management'],
+          correct: 1,
+          explanation: 'Automatic batching groups multiple state updates into a single re-render for better performance.'
+        },
+        {
+          question: 'What is the React DevTools Profiler?',
+          options: ['Development profiler', 'Browser extension for profiling React apps', 'Tool profiler', 'Dev tool'],
+          correct: 1,
+          explanation: 'React DevTools Profiler is a browser extension that helps profile and debug React application performance.'
+        },
+        {
+          question: 'What is React\'s Selective Hydration?',
+          options: ['Selective process', 'Hydrating components based on user interaction', 'Component selection', 'Hydration management'],
+          correct: 1,
+          explanation: 'Selective Hydration allows React to prioritize hydrating components based on user interactions.'
+        },
+        {
+          question: 'What is the React 18 createRoot API?',
+          options: ['Root creation', 'New API for creating React roots with concurrent features', 'API creation', 'Root management'],
+          correct: 1,
+          explanation: 'createRoot is the new API in React 18 for creating roots that enable concurrent features.'
+        },
+        {
+          question: 'What is React\'s Streaming SSR?',
+          options: ['Server streaming', 'Streaming server-side rendered content', 'Stream management', 'SSR streaming'],
+          correct: 1,
+          explanation: 'Streaming SSR allows React to send HTML to the browser in chunks, improving perceived performance.'
+        }
+      ]
     };
 
-    // Get questions for the topic and level
-    const topicQuestions = templates[topic];
-    if (!topicQuestions) {
-      // Fallback to JavaScript if topic not found
-      return templates['JavaScript'][0] || [];
-    }
-
-    const levelQuestions = topicQuestions[level];
-    if (!levelQuestions) {
-      // Fallback to level 0 if level not found
-      return topicQuestions[0] || templates['JavaScript'][0] || [];
-    }
-
-    return levelQuestions;
+    return questionSets[topic] || questionSets['JavaScript'];
   }
 
   getAvailableTopics(): string[] {
@@ -1848,12 +1191,10 @@ class AIService {
   }
 
   async generateQuestions(request: QuestionGenerationRequest): Promise<Question[]> {
-    // Create a cache key based on topic and level
-    const cacheKey = `${request.topic.toLowerCase()}_level_${request.level}`;
+    const cacheKey = `${request.topic}-${request.level}`;
     
-    // Check if we have cached questions for this topic and level
+    // Check cache first
     if (this.questionCache.has(cacheKey)) {
-      console.log(`Using cached questions for ${request.topic} Level ${request.level}`);
       return this.questionCache.get(cacheKey)!;
     }
 
@@ -1875,23 +1216,22 @@ class AIService {
       const response = await this.callOpenAI(prompt);
       const questions = response.questions;
       
-      // Cache the generated questions
+      // Cache the questions
       this.questionCache.set(cacheKey, questions);
-      console.log(`Generated and cached ${questions.length} questions for ${request.topic} Level ${request.level}`);
       
       return questions;
     } catch (error) {
       console.error('Error generating questions:', error);
       // Fallback to template questions
       const fallbackQuestions = this.getQuestionTemplates(request.topic, request.level).map((template, index) => ({
-        id: `${request.topic.toLowerCase()}_lv${request.level}_q${index}_${Date.now()}`,
+        id: `fallback_${Date.now()}_${index}`,
         question_text: template.question,
         options: template.options,
         correct_answer: template.correct,
         explanation: template.explanation
       }));
       
-      // Cache the fallback questions too
+      // Cache fallback questions too
       this.questionCache.set(cacheKey, fallbackQuestions);
       
       return fallbackQuestions;
@@ -1901,27 +1241,12 @@ class AIService {
   async generateQuestionsForTopic(topicName: string, level: number = 0): Promise<Question[]> {
     const difficulty = level <= 1 ? 'beginner' : level <= 3 ? 'intermediate' : 'advanced';
     
-    console.log(`Generating questions for ${topicName} Level ${level} (${difficulty})`);
-    
     return this.generateQuestions({
       topic: topicName,
       level,
-      questionCount: 10, // Generate exactly 10 questions per level
+      questionCount: 10,
       difficulty
     });
-  }
-
-  // Method to clear cache if needed
-  clearCache(): void {
-    this.questionCache.clear();
-  }
-
-  // Method to get cache status
-  getCacheInfo(): { size: number; keys: string[] } {
-    return {
-      size: this.questionCache.size,
-      keys: Array.from(this.questionCache.keys())
-    };
   }
 }
 

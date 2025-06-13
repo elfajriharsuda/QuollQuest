@@ -8,6 +8,10 @@ interface UserProfile {
   avatar_url: string | null;
   exp: number;
   level: number;
+  login_streak: number;
+  longest_streak: number;
+  total_logins: number;
+  last_login_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,7 +27,7 @@ interface UserStats {
 
 interface ActivityItem {
   id: string;
-  type: 'quest_completed' | 'level_up' | 'achievement_earned';
+  type: 'quest_completed' | 'level_up' | 'achievement_earned' | 'login_streak';
   description: string;
   exp_gained: number;
   created_at: string;
@@ -47,8 +51,26 @@ export const useUserProfile = () => {
     if (user) {
       fetchUserProfile();
       fetchUserStats();
+      updateLoginStreak();
     }
   }, [user]);
+
+  const updateLoginStreak = async () => {
+    if (!user) return;
+
+    try {
+      // Call the database function to update login streak
+      const { error } = await supabase.rpc('update_login_streak', {
+        user_uuid: user.id
+      });
+
+      if (error) {
+        console.error('Error updating login streak:', error);
+      }
+    } catch (err) {
+      console.error('Error calling update_login_streak:', err);
+    }
+  };
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -87,6 +109,9 @@ export const useUserProfile = () => {
           username: user.user_metadata?.username || user.email?.split('@')[0] || 'Adventurer',
           exp: 0,
           level: 1,
+          login_streak: 0,
+          longest_streak: 0,
+          total_logins: 0,
           avatar_url: user.user_metadata?.avatar_url || null,
         })
         .select()
@@ -94,6 +119,9 @@ export const useUserProfile = () => {
 
       if (error) throw error;
       setProfile(data);
+      
+      // Update login streak for new user
+      await updateLoginStreak();
     } catch (err) {
       console.error('Error creating user profile:', err);
       setError('Failed to create user profile');
@@ -122,9 +150,6 @@ export const useUserProfile = () => {
         const completed = questProgress.filter(q => q.status === 'completed');
         const totalExp = completed.reduce((sum, quest) => sum + (quest.score || 0), 0);
         
-        // Calculate streak (mock for now)
-        const streak = calculateStreak(completed);
-        
         // Generate recent activity from quiz attempts
         const recentActivity: ActivityItem[] = (quizAttempts || []).map((attempt, index) => ({
           id: `activity_${index}`,
@@ -137,7 +162,7 @@ export const useUserProfile = () => {
         setStats({
           totalQuests: questProgress.length,
           completedQuests: completed.length,
-          currentStreak: streak,
+          currentStreak: profile?.login_streak || 0, // Use login streak instead of quest streak
           totalExp,
           achievements: Math.floor(completed.length / 2), // 1 achievement per 2 completed quests
           recentActivity
@@ -148,41 +173,6 @@ export const useUserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const calculateStreak = (completedQuests: any[]): number => {
-    if (completedQuests.length === 0) return 0;
-    
-    // Sort by completion date
-    const sorted = completedQuests
-      .filter(q => q.completed_at)
-      .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
-    
-    if (sorted.length === 0) return 0;
-    
-    let streak = 1;
-    const today = new Date();
-    const lastCompletion = new Date(sorted[0].completed_at);
-    
-    // Check if last completion was today or yesterday
-    const daysDiff = Math.floor((today.getTime() - lastCompletion.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (daysDiff > 1) return 0; // Streak broken
-    
-    // Count consecutive days (simplified logic)
-    for (let i = 1; i < sorted.length; i++) {
-      const current = new Date(sorted[i - 1].completed_at);
-      const previous = new Date(sorted[i].completed_at);
-      const diff = Math.floor((current.getTime() - previous.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (diff <= 1) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    
-    return Math.min(streak, 30); // Cap at 30 days
   };
 
   const updateProfile = async (updates: Partial<UserProfile>) => {

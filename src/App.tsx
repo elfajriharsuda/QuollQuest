@@ -15,6 +15,7 @@ import QuestDetailPage from './pages/QuestDetailPage';
 import CommunityPage from './pages/CommunityPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import LeaderboardPage from './pages/LeaderboardPage';
 
 function App() {
   return (
@@ -53,6 +54,13 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <CommunityPage />
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/leaderboard" element={
+              <ProtectedRoute>
+                <Layout>
+                  <LeaderboardPage />
                 </Layout>
               </ProtectedRoute>
             } />

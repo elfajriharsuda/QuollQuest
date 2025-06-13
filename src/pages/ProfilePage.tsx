@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../lib/supabase';
+import AvatarSelector from '../components/AvatarSelector';
 import { 
   Crown, 
   Trophy, 
@@ -15,7 +16,10 @@ import {
   X,
   Star,
   Award,
-  TrendingUp
+  TrendingUp,
+  Flame,
+  Users,
+  Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -23,6 +27,7 @@ const ProfilePage: React.FC = () => {
   const { user } = useAuth();
   const { profile, stats, loading, updateProfile } = useUserProfile();
   const [editing, setEditing] = useState(false);
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -52,13 +57,27 @@ const ProfilePage: React.FC = () => {
     }
   };
 
-  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !user) return;
+  const handleAvatarSelect = async (avatarUrl: string | null) => {
+    try {
+      const result = await updateProfile({ avatar_url: avatarUrl });
+      if (result?.success) {
+        toast.success('Avatar updated successfully!');
+        setShowAvatarSelector(false);
+      } else {
+        toast.error('Error updating avatar');
+      }
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      toast.error('Error updating avatar');
+    }
+  };
+
+  const uploadCustomAvatar = async (file: File) => {
+    if (!user) return;
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -73,7 +92,8 @@ const ProfilePage: React.FC = () => {
 
       const result = await updateProfile({ avatar_url: data.publicUrl });
       if (result?.success) {
-        toast.success('Avatar updated successfully!');
+        toast.success('Custom avatar uploaded successfully!');
+        setShowAvatarSelector(false);
       } else {
         toast.error('Error updating avatar');
       }
@@ -101,9 +121,9 @@ const ProfilePage: React.FC = () => {
     },
     { 
       name: 'Streak Master', 
-      description: '7-day learning streak', 
-      icon: Zap, 
-      earned: stats.currentStreak >= 7 
+      description: '7-day login streak', 
+      icon: Flame, 
+      earned: (profile?.login_streak || 0) >= 7 
     },
     { 
       name: 'Knowledge Seeker', 
@@ -118,10 +138,10 @@ const ProfilePage: React.FC = () => {
       earned: (profile?.exp || 0) >= 1000 
     },
     { 
-      name: 'Community Hero', 
-      description: 'Get 50 likes on posts', 
+      name: 'Dedicated Learner', 
+      description: '30-day login streak', 
       icon: Award, 
-      earned: false // This would need to be calculated from actual likes
+      earned: (profile?.login_streak || 0) >= 30 
     },
   ];
 
@@ -160,17 +180,16 @@ const ProfilePage: React.FC = () => {
               <img
                 src={profile.avatar_url || `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop`}
                 alt={profile.username}
-                className="w-32 h-32 rounded-full border-4 border-primary-500 shadow-2xl"
+                className="w-32 h-32 rounded-full border-4 border-primary-500 shadow-2xl object-cover"
               />
-              <label className="absolute bottom-0 right-0 bg-primary-600 hover:bg-primary-700 p-2 rounded-full cursor-pointer transition-colors">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowAvatarSelector(true)}
+                className="absolute bottom-0 right-0 bg-primary-600 hover:bg-primary-700 p-2 rounded-full cursor-pointer transition-colors"
+              >
                 <Camera className="w-4 h-4 text-white" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadAvatar}
-                  className="hidden"
-                />
-              </label>
+              </motion.button>
             </div>
 
             {/* Profile Info */}
@@ -260,7 +279,7 @@ const ProfilePage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          className="grid grid-cols-2 md:grid-cols-5 gap-6"
         >
           <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 text-center">
             <Trophy className="w-8 h-8 text-fantasy-gold mx-auto mb-2" />
@@ -269,9 +288,9 @@ const ProfilePage: React.FC = () => {
           </div>
           
           <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 text-center">
-            <Zap className="w-8 h-8 text-fantasy-rose mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{stats.currentStreak}</div>
-            <div className="text-sm text-gray-400">Day Streak</div>
+            <Flame className="w-8 h-8 text-fantasy-rose mx-auto mb-2" />
+            <div className="text-2xl font-bold text-white">{profile.login_streak}</div>
+            <div className="text-sm text-gray-400">Current Streak</div>
           </div>
           
           <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 text-center">
@@ -282,8 +301,14 @@ const ProfilePage: React.FC = () => {
           
           <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 text-center">
             <Award className="w-8 h-8 text-fantasy-purple mx-auto mb-2" />
-            <div className="text-2xl font-bold text-white">{stats.achievements}</div>
-            <div className="text-sm text-gray-400">Achievements</div>
+            <div className="text-2xl font-bold text-white">{profile.longest_streak}</div>
+            <div className="text-sm text-gray-400">Best Streak</div>
+          </div>
+
+          <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 text-center">
+            <Clock className="w-8 h-8 text-primary-400 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-white">{profile.total_logins}</div>
+            <div className="text-sm text-gray-400">Total Logins</div>
           </div>
         </motion.div>
 
@@ -352,18 +377,20 @@ const ProfilePage: React.FC = () => {
           
           <div className="space-y-4">
             {stats.recentActivity.length > 0 ? (
-              stats.recentActivity.map((activity, index) => (
-                <div key={activity.id} className="flex items-center space-x-4 p-4 bg-dark-surface/30 rounded-lg">
-                  <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-full flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-white" />
+              stats.recentActivity.slice(0, 4).map((activity, index) => (
+                <div key={activity.id} className="flex items-center space-x-3 p-3 bg-dark-surface/30 rounded-lg">
+                  <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-full flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-white">{activity.description}</p>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-white">{activity.description}</p>
+                    <p className="text-xs text-gray-400">
                       {new Date(activity.created_at).toLocaleDateString()}
                     </p>
                   </div>
-                  <div className="text-fantasy-gold font-semibold">+{activity.exp_gained} EXP</div>
+                  <div className="text-fantasy-gold text-sm font-medium">
+                    +{activity.exp_gained} EXP
+                  </div>
                 </div>
               ))
             ) : (
@@ -375,6 +402,39 @@ const ProfilePage: React.FC = () => {
             )}
           </div>
         </motion.div>
+
+        {/* Avatar Selector Modal */}
+        {showAvatarSelector && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-dark-card/90 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Select Avatar</h2>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowAvatarSelector(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </motion.button>
+              </div>
+              
+              <AvatarSelector
+                currentAvatar={profile.avatar_url}
+                onAvatarSelect={handleAvatarSelect}
+                onFileUpload={uploadCustomAvatar}
+              />
+            </motion.div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

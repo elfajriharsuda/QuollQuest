@@ -9,7 +9,7 @@ import {
   User, 
   LogOut, 
   Crown,
-  Settings
+  Trophy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -35,6 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
     { path: '/quests', icon: Map, label: 'Quests' },
+    { path: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { path: '/community', icon: Users, label: 'Quoll\'s Den' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
