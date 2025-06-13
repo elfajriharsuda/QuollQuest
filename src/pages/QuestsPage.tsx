@@ -15,7 +15,8 @@ import {
   Sparkles,
   Brain,
   Target,
-  Trophy
+  Trophy,
+  AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -108,6 +109,13 @@ const QuestsPage: React.FC = () => {
     }
   };
 
+  const checkExistingTopic = (topicName: string) => {
+    return topics.find(topic => 
+      topic.name.toLowerCase() === topicName.toLowerCase() && 
+      topic.user_id === user?.id
+    );
+  };
+
   const createTopic = async () => {
     if (!newTopicName.trim() || !user) return;
 
@@ -118,6 +126,42 @@ const QuestsPage: React.FC = () => {
 
     if (!isSupported) {
       toast.error(`Topic "${newTopicName}" is not supported yet. Please choose from: ${availableTopics.join(', ')}`);
+      return;
+    }
+
+    // Check if user already has this topic
+    const existingTopic = checkExistingTopic(newTopicName);
+    if (existingTopic) {
+      const completionPercentage = Math.round(existingTopic.progress);
+      
+      toast.error(
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-orange-500" />
+            <span className="font-semibold">Topic Already Exists!</span>
+          </div>
+          <div className="text-sm">
+            You already have a {newTopicName} quest ({completionPercentage}% complete).
+          </div>
+          <div className="text-sm text-gray-300">
+            {completionPercentage === 100 
+              ? "🎉 You've mastered this topic! Try a new one." 
+              : `📚 Continue your current quest to reach 100% completion.`
+            }
+          </div>
+        </div>,
+        {
+          duration: 6000,
+          style: {
+            background: '#16213e',
+            color: '#ffffff',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+          },
+        }
+      );
+      
+      // Clear the input
+      setNewTopicName('');
       return;
     }
 
@@ -161,20 +205,40 @@ const QuestsPage: React.FC = () => {
   const createPopularTopic = async (topicName: string) => {
     if (!user) return;
 
+    // Check if user already has this topic
+    const existingTopic = checkExistingTopic(topicName);
+    if (existingTopic) {
+      const completionPercentage = Math.round(existingTopic.progress);
+      
+      toast.error(
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="w-5 h-5 text-orange-500" />
+            <span className="font-semibold">Quest Already Active!</span>
+          </div>
+          <div className="text-sm">
+            You already have a {topicName} quest ({completionPercentage}% complete).
+          </div>
+          <div className="text-sm text-gray-300">
+            {completionPercentage === 100 
+              ? "🏆 You've mastered this topic! Choose a different one." 
+              : `🎯 Continue your current ${topicName} quest to unlock new topics.`
+            }
+          </div>
+        </div>,
+        {
+          duration: 6000,
+          style: {
+            background: '#16213e',
+            color: '#ffffff',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+          },
+        }
+      );
+      return;
+    }
+
     try {
-      // Check if user already has this topic
-      const { data: existingTopic } = await supabase
-        .from('topics')
-        .select('id')
-        .eq('name', topicName)
-        .eq('user_id', user.id)
-        .single();
-
-      if (existingTopic) {
-        toast.info(`You already have a ${topicName} quest!`);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('topics')
         .insert({
@@ -213,6 +277,31 @@ const QuestsPage: React.FC = () => {
     if (level <= 1) return { name: 'Beginner', color: 'text-green-400', bgColor: 'bg-green-400/20' };
     if (level <= 3) return { name: 'Intermediate', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20' };
     return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20' };
+  };
+
+  const getTopicStatus = (topic: Topic) => {
+    if (topic.completedLevels === topic.totalLevels) {
+      return { 
+        text: 'Mastered!', 
+        icon: Trophy, 
+        color: 'text-fantasy-gold',
+        bgColor: 'bg-fantasy-gold/20'
+      };
+    } else if (topic.completedLevels > 0) {
+      return { 
+        text: `${topic.completedLevels}/${topic.totalLevels} Complete`, 
+        icon: Target, 
+        color: 'text-primary-400',
+        bgColor: 'bg-primary-400/20'
+      };
+    } else {
+      return { 
+        text: 'Not Started', 
+        icon: Sparkles, 
+        color: 'text-gray-400',
+        bgColor: 'bg-gray-400/20'
+      };
+    }
   };
 
   const filteredTopics = topics.filter(topic =>
@@ -288,6 +377,15 @@ const QuestsPage: React.FC = () => {
               <p className="text-sm text-gray-400 mb-2">
                 Supported topics: {availableTopics.join(', ')}
               </p>
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-orange-400" />
+                  <span className="text-sm text-orange-300 font-medium">Note:</span>
+                </div>
+                <p className="text-sm text-orange-200 mt-1">
+                  You can only have one quest per topic. Complete your existing quests before creating new ones on the same topic.
+                </p>
+              </div>
             </div>
             
             <div className="flex flex-col md:flex-row gap-4">
@@ -334,24 +432,56 @@ const QuestsPage: React.FC = () => {
             <span>Popular AI-Generated Quests</span>
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {availableTopics.map((topic, index) => (
-              <motion.button
-                key={topic}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.3 + index * 0.05 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => createPopularTopic(topic)}
-                className="bg-gradient-to-r from-dark-card/60 to-dark-surface/60 backdrop-blur-sm p-4 rounded-xl border border-primary-800/30 hover:border-primary-600/50 transition-all duration-300 text-sm font-medium text-center group"
-              >
-                <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:animate-pulse">
-                  <Brain className="w-4 h-4 text-white" />
-                </div>
-                <span className="group-hover:text-primary-300 transition-colors">{topic}</span>
-                <div className="text-xs text-gray-400 mt-1">AI Generated</div>
-              </motion.button>
-            ))}
+            {availableTopics.map((topic, index) => {
+              const existingTopic = checkExistingTopic(topic);
+              const isDisabled = !!existingTopic;
+              
+              return (
+                <motion.button
+                  key={topic}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.3 + index * 0.05 }}
+                  whileHover={!isDisabled ? { scale: 1.05, y: -2 } : {}}
+                  whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                  onClick={() => !isDisabled && createPopularTopic(topic)}
+                  disabled={isDisabled}
+                  className={`backdrop-blur-sm p-4 rounded-xl border transition-all duration-300 text-sm font-medium text-center group relative ${
+                    isDisabled 
+                      ? 'bg-gray-600/30 border-gray-600/30 opacity-60 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-dark-card/60 to-dark-surface/60 border-primary-800/30 hover:border-primary-600/50'
+                  }`}
+                >
+                  {isDisabled && (
+                    <div className="absolute top-1 right-1">
+                      <CheckCircle className="w-4 h-4 text-fantasy-emerald" />
+                    </div>
+                  )}
+                  
+                  <div className={`w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center ${
+                    isDisabled 
+                      ? 'bg-gray-600'
+                      : 'bg-gradient-to-r from-primary-500 to-fantasy-purple group-hover:animate-pulse'
+                  }`}>
+                    <Brain className="w-4 h-4 text-white" />
+                  </div>
+                  
+                  <span className={`transition-colors ${
+                    isDisabled 
+                      ? 'text-gray-400'
+                      : 'group-hover:text-primary-300'
+                  }`}>
+                    {topic}
+                  </span>
+                  
+                  <div className={`text-xs mt-1 ${
+                    isDisabled ? 'text-fantasy-emerald' : 'text-gray-400'
+                  }`}>
+                    {isDisabled ? 'Active' : 'AI Generated'}
+                  </div>
+                </motion.button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -385,6 +515,8 @@ const QuestsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredTopics.map((topic, index) => {
                 const difficultyInfo = getDifficultyInfo(topic.currentLevel);
+                const statusInfo = getTopicStatus(topic);
+                const StatusIcon = statusInfo.icon;
                 
                 return (
                   <motion.div
@@ -408,12 +540,15 @@ const QuestsPage: React.FC = () => {
                             {topic.description}
                           </p>
                         </div>
-                        {topic.is_popular && (
-                          <div className="flex items-center space-x-1 bg-fantasy-gold/20 px-2 py-1 rounded-lg">
-                            <Star className="w-3 h-3 text-fantasy-gold" />
-                            <span className="text-xs text-fantasy-gold font-medium">Popular</span>
+                        
+                        <div className={`px-2 py-1 rounded-lg ${statusInfo.bgColor}`}>
+                          <div className="flex items-center space-x-1">
+                            <StatusIcon className={`w-3 h-3 ${statusInfo.color}`} />
+                            <span className={`text-xs font-medium ${statusInfo.color}`}>
+                              {statusInfo.text}
+                            </span>
                           </div>
-                        )}
+                        </div>
                       </div>
 
                       {/* Current Level & Difficulty */}
