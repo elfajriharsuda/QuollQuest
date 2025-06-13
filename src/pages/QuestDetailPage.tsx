@@ -15,7 +15,9 @@ import {
   Zap,
   Target,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Brain,
+  Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -83,7 +85,11 @@ const QuestDetailPage: React.FC = () => {
       // Fetch user's progress for this topic to determine current level
       const { data: progressData } = await supabase
         .from('user_quest_progress')
-        .select('status, quest_id, quests(level)')
+        .select(`
+          status, 
+          quest_id, 
+          quests!inner(level, topic_id)
+        `)
         .eq('user_id', user.id)
         .eq('quests.topic_id', id);
 
@@ -92,7 +98,7 @@ const QuestDetailPage: React.FC = () => {
       if (progressData && progressData.length > 0) {
         const completedLevels = progressData
           .filter(p => p.status === 'completed')
-          .map(p => p.quests?.level || 0);
+          .map(p => (p.quests as any)?.level || 0);
         
         if (completedLevels.length > 0) {
           level = Math.max(...completedLevels) + 1;
@@ -115,11 +121,29 @@ const QuestDetailPage: React.FC = () => {
     setGenerating(true);
     
     try {
+      console.log(`Generating questions for topic: ${topicName}, level: ${level}`);
+      
+      // Use the AI service to generate 10 topic-specific questions
       const generatedQuestions = await aiService.generateQuestionsForTopic(topicName, level);
+      
+      console.log(`Generated ${generatedQuestions.length} questions:`, generatedQuestions);
+      
+      if (generatedQuestions.length === 0) {
+        throw new Error('No questions generated');
+      }
+      
       setQuestions(generatedQuestions);
+      
+      // Show success message with topic and difficulty info
+      const difficulty = level <= 1 ? 'Beginner' : level <= 3 ? 'Intermediate' : 'Advanced';
+      toast.success(`Generated 10 ${difficulty} level questions for ${topicName}!`);
+      
     } catch (error) {
       console.error('Error generating questions:', error);
-      toast.error('Error generating questions');
+      toast.error('Error generating questions. Please try again.');
+      
+      // Navigate back to quests page if question generation fails
+      navigate('/quests');
     } finally {
       setGenerating(false);
     }
@@ -167,14 +191,18 @@ const QuestDetailPage: React.FC = () => {
       if (passed) {
         toast.success(`Quest completed! Score: ${score}%`);
         
-        // Award experience points
-        const expGained = Math.floor(score / 10) * 10; // 10 EXP per 10% score
+        // Award experience points based on level and performance
+        const baseExp = 50; // Base EXP for completing a quest
+        const levelMultiplier = currentLevel + 1; // Higher levels give more EXP
+        const performanceBonus = Math.floor((score - 70) / 10) * 10; // Bonus for high performance
+        const expGained = baseExp * levelMultiplier + performanceBonus;
+        
         if (profile && addExperience) {
           const result = await addExperience(expGained);
           if (result?.leveledUp) {
-            toast.success(`Level up! You are now level ${result.newLevel}!`, {
+            toast.success(`🎉 Level up! You are now level ${result.newLevel}!`, {
               duration: 5000,
-              icon: '🎉'
+              icon: '👑'
             });
           }
         }
@@ -265,6 +293,7 @@ const QuestDetailPage: React.FC = () => {
 
       // If passed, unlock next level
       if (passed) {
+        // Create next level quest if it doesn't exist
         const { data: nextQuest } = await supabase
           .from('quests')
           .select('id')
@@ -272,13 +301,33 @@ const QuestDetailPage: React.FC = () => {
           .eq('level', currentLevel + 1)
           .single();
 
-        if (nextQuest) {
+        let nextQuestId = nextQuest?.id;
+
+        if (!nextQuest) {
+          // Create next level quest
+          const { data: newNextQuest, error: nextQuestError } = await supabase
+            .from('quests')
+            .insert({
+              topic_id: topic.id,
+              level: currentLevel + 1,
+              is_unlocked: false,
+              is_completed: false
+            })
+            .select('id')
+            .single();
+
+          if (!nextQuestError) {
+            nextQuestId = newNextQuest.id;
+          }
+        }
+
+        if (nextQuestId) {
           // Check if progress exists for next level
           const { data: nextProgress } = await supabase
             .from('user_quest_progress')
             .select('id')
             .eq('user_id', user.id)
-            .eq('quest_id', nextQuest.id)
+            .eq('quest_id', nextQuestId)
             .single();
 
           if (!nextProgress) {
@@ -287,7 +336,7 @@ const QuestDetailPage: React.FC = () => {
               .from('user_quest_progress')
               .insert({
                 user_id: user.id,
-                quest_id: nextQuest.id,
+                quest_id: nextQuestId,
                 status: 'unlocked',
                 score: null,
                 completed_at: null
@@ -314,6 +363,12 @@ const QuestDetailPage: React.FC = () => {
     generateQuestionsForTopic(topic!.name, currentLevel);
   };
 
+  const getDifficultyInfo = (level: number) => {
+    if (level <= 1) return { name: 'Beginner', color: 'text-green-400', bgColor: 'bg-green-400/20' };
+    if (level <= 3) return { name: 'Intermediate', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20' };
+    return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20' };
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center">
@@ -326,25 +381,61 @@ const QuestDetailPage: React.FC = () => {
   }
 
   if (generating) {
+    const difficultyInfo = getDifficultyInfo(currentLevel);
+    
     return (
-      <div className="min-h-screen bg-fantasy-bg flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-fantasy-bg flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-20 h-20 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl"
           >
-            <Sparkles className="w-8 h-8 text-white" />
+            <Brain className="w-10 h-10 text-white" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-4">AI Crafting Your Quest</h2>
-          <p className="text-gray-300">Generating personalized questions for {topic?.name} Level {currentLevel}...</p>
-          <div className="flex justify-center mt-6">
+          
+          <h2 className="text-3xl font-bold text-white mb-4">
+            🤖 AI Crafting Your Quest
+          </h2>
+          
+          <div className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 mb-6">
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Sparkles className="w-5 h-5 text-fantasy-gold" />
+              <span className="text-white font-semibold">{topic?.name}</span>
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2 mb-3">
+              <Target className="w-4 h-4 text-primary-400" />
+              <span className="text-gray-300">Level {currentLevel}</span>
+              <span className={`px-2 py-1 rounded-lg text-xs font-medium ${difficultyInfo.bgColor} ${difficultyInfo.color}`}>
+                {difficultyInfo.name}
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2">
+              <Clock className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400 text-sm">Generating 10 questions...</span>
+            </div>
+          </div>
+          
+          <p className="text-gray-300 mb-6">
+            Our AI is creating personalized questions tailored to your learning level and the {topic?.name} topic.
+          </p>
+          
+          <div className="flex justify-center space-x-1">
             {[...Array(3)].map((_, i) => (
               <motion.div
                 key={i}
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                className="w-2 h-2 bg-primary-500 rounded-full mx-1"
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 1, 0.5]
+                }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity, 
+                  delay: i * 0.2 
+                }}
+                className="w-3 h-3 bg-primary-500 rounded-full"
               />
             ))}
           </div>
@@ -358,10 +449,10 @@ const QuestDetailPage: React.FC = () => {
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center">
         <div className="text-center">
           <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-white text-xl">Quest not found</p>
+          <p className="text-white text-xl mb-4">Quest not found or failed to generate questions</p>
           <button
             onClick={() => navigate('/quests')}
-            className="mt-4 bg-primary-600 hover:bg-primary-700 px-6 py-2 rounded-lg text-white transition-colors"
+            className="bg-primary-600 hover:bg-primary-700 px-6 py-2 rounded-lg text-white transition-colors"
           >
             Back to Quests
           </button>
@@ -372,12 +463,14 @@ const QuestDetailPage: React.FC = () => {
 
   if (quizState.showResult) {
     const passed = quizState.score >= 70;
+    const difficultyInfo = getDifficultyInfo(currentLevel);
+    
     return (
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 max-w-2xl w-full border border-primary-800/30"
+          className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 max-w-4xl w-full border border-primary-800/30"
         >
           <div className="text-center mb-8">
             <motion.div
@@ -397,8 +490,18 @@ const QuestDetailPage: React.FC = () => {
             </motion.div>
             
             <h2 className="text-3xl font-bold text-white mb-4">
-              {passed ? 'Quest Completed!' : 'Quest Failed'}
+              {passed ? '🎉 Quest Completed!' : '💪 Quest Failed'}
             </h2>
+            
+            <div className="flex items-center justify-center space-x-4 mb-4">
+              <div className={`px-3 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
+                <span className={`text-sm font-medium ${difficultyInfo.color}`}>
+                  {difficultyInfo.name} Level
+                </span>
+              </div>
+              <div className="text-gray-400">•</div>
+              <div className="text-gray-300">{topic.name}</div>
+            </div>
             
             <div className="text-6xl font-bold mb-4">
               <span className={passed ? 'text-fantasy-emerald' : 'text-red-500'}>
@@ -408,17 +511,17 @@ const QuestDetailPage: React.FC = () => {
             
             <p className="text-gray-300 text-lg mb-4">
               {passed 
-                ? `Congratulations! You earned ${Math.floor(quizState.score / 10) * 10} EXP!`
-                : 'You need 70% to pass. Try again to improve your score!'
+                ? `Excellent work! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`
+                : 'You need 70% to pass. Review the explanations and try again!'
               }
             </p>
 
             {passed && (
-              <div className="bg-fantasy-emerald/20 border border-fantasy-emerald/30 rounded-lg p-4 mb-4">
+              <div className="bg-fantasy-emerald/20 border border-fantasy-emerald/30 rounded-lg p-4 mb-6">
                 <div className="flex items-center justify-center space-x-2">
                   <Zap className="w-5 h-5 text-fantasy-emerald" />
                   <span className="text-fantasy-emerald font-semibold">
-                    +{Math.floor(quizState.score / 10) * 10} EXP Gained!
+                    Quest Mastered! Next level unlocked!
                   </span>
                 </div>
               </div>
@@ -427,7 +530,7 @@ const QuestDetailPage: React.FC = () => {
 
           {/* Question Review */}
           <div className="space-y-4 mb-8 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-white mb-4">Question Review</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">📝 Question Review</h3>
             {questions.map((question, index) => {
               const userAnswer = quizState.answers[index];
               const isCorrect = userAnswer === question.correct_answer;
@@ -452,7 +555,9 @@ const QuestDetailPage: React.FC = () => {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-white text-sm mb-2">{question.question_text}</p>
+                      <p className="text-white text-sm mb-2 font-medium">
+                        Question {index + 1}: {question.question_text}
+                      </p>
                       <div className="space-y-1">
                         <p className="text-xs">
                           <span className="text-gray-400">Your answer: </span>
@@ -469,8 +574,8 @@ const QuestDetailPage: React.FC = () => {
                           </p>
                         )}
                         {question.explanation && (
-                          <p className="text-xs text-gray-300 mt-2 italic">
-                            {question.explanation}
+                          <p className="text-xs text-gray-300 mt-2 italic bg-dark-surface/30 p-2 rounded">
+                            💡 {question.explanation}
                           </p>
                         )}
                       </div>
@@ -510,6 +615,7 @@ const QuestDetailPage: React.FC = () => {
 
   const currentQuestion = questions[quizState.currentQuestion];
   const progress = ((quizState.currentQuestion + 1) / questions.length) * 100;
+  const difficultyInfo = getDifficultyInfo(currentLevel);
 
   return (
     <div className="min-h-screen bg-fantasy-bg text-white p-4">
@@ -532,14 +638,21 @@ const QuestDetailPage: React.FC = () => {
                   {quizState.currentQuestion + 1} of {questions.length}
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Zap className="w-5 h-5 text-fantasy-gold" />
-                <span className="text-sm text-gray-300">Level {currentLevel}</span>
+              <div className={`px-3 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
+                <span className={`text-sm font-medium ${difficultyInfo.color}`}>
+                  {difficultyInfo.name}
+                </span>
               </div>
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">{topic.name} Quest - Level {currentLevel}</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            {topic.name} Quest - Level {currentLevel}
+          </h1>
+          
+          <p className="text-gray-400 mb-4">
+            AI-generated questions tailored for {difficultyInfo.name.toLowerCase()} level
+          </p>
           
           {/* Progress Bar */}
           <div className="w-full bg-dark-surface rounded-full h-3 mb-4">
@@ -563,6 +676,11 @@ const QuestDetailPage: React.FC = () => {
             className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 border border-primary-800/30"
           >
             <div className="mb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Brain className="w-5 h-5 text-fantasy-gold" />
+                <span className="text-sm text-fantasy-gold font-medium">AI Generated Question</span>
+              </div>
+              
               <h2 className="text-2xl font-bold text-white mb-6 leading-relaxed whitespace-pre-line">
                 {currentQuestion.question_text}
               </h2>
@@ -605,12 +723,12 @@ const QuestDetailPage: React.FC = () => {
                       }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <span className="text-lg">{option}</span>
+                      <span className="text-lg flex-1">{option}</span>
                       {showCorrectAnswer && (
-                        <CheckCircle className="w-6 h-6 text-fantasy-emerald ml-auto" />
+                        <CheckCircle className="w-6 h-6 text-fantasy-emerald" />
                       )}
                       {showWrongAnswer && (
-                        <XCircle className="w-6 h-6 text-red-500 ml-auto" />
+                        <XCircle className="w-6 h-6 text-red-500" />
                       )}
                     </div>
                   </motion.button>
@@ -639,13 +757,15 @@ const QuestDetailPage: React.FC = () => {
                     <span className={`font-semibold text-lg ${
                       quizState.isCorrect ? 'text-fantasy-emerald' : 'text-red-500'
                     }`}>
-                      {quizState.isCorrect ? 'Correct!' : 'Incorrect'}
+                      {quizState.isCorrect ? '✅ Correct!' : '❌ Incorrect'}
                     </span>
                   </div>
                   {currentQuestion.explanation && (
-                    <p className="text-gray-300 text-sm">
-                      <strong>Explanation:</strong> {currentQuestion.explanation}
-                    </p>
+                    <div className="bg-dark-surface/30 p-3 rounded-lg">
+                      <p className="text-gray-300 text-sm">
+                        <strong className="text-white">💡 Explanation:</strong> {currentQuestion.explanation}
+                      </p>
+                    </div>
                   )}
                 </div>
 

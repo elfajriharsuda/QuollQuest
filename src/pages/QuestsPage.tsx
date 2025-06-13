@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { aiService } from '../services/aiService';
 import { 
   Plus, 
   Search, 
@@ -11,7 +12,10 @@ import {
   Star,
   Zap,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Brain,
+  Target,
+  Trophy
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -24,6 +28,8 @@ interface Topic {
   progress: number;
   totalLevels: number;
   completedLevels: number;
+  currentLevel: number;
+  user_id: string;
 }
 
 const QuestsPage: React.FC = () => {
@@ -34,16 +40,8 @@ const QuestsPage: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const popularTopics = [
-    'JavaScript',
-    'Python',
-    'React',
-    'Machine Learning',
-    'Data Science',
-    'Web Development',
-    'DevOps',
-    'Blockchain',
-  ];
+  // Get available topics from AI service
+  const availableTopics = aiService.getAvailableTopics();
 
   useEffect(() => {
     fetchTopics();
@@ -61,13 +59,45 @@ const QuestsPage: React.FC = () => {
 
       if (error) throw error;
 
-      // Add mock progress data
-      const topicsWithProgress = topicsData?.map(topic => ({
-        ...topic,
-        progress: Math.floor(Math.random() * 100),
-        totalLevels: 6,
-        completedLevels: Math.floor(Math.random() * 6),
-      })) || [];
+      // Fetch user progress for each topic
+      const topicsWithProgress = await Promise.all(
+        (topicsData || []).map(async (topic) => {
+          const { data: progressData } = await supabase
+            .from('user_quest_progress')
+            .select(`
+              status, 
+              quest_id, 
+              quests!inner(level, topic_id)
+            `)
+            .eq('user_id', user.id)
+            .eq('quests.topic_id', topic.id);
+
+          // Calculate progress
+          const completedLevels = progressData?.filter(p => p.status === 'completed').length || 0;
+          const totalLevels = 6; // Each topic has 6 levels (0-5)
+          const progress = (completedLevels / totalLevels) * 100;
+          
+          // Determine current level
+          let currentLevel = 0;
+          if (progressData && progressData.length > 0) {
+            const completed = progressData
+              .filter(p => p.status === 'completed')
+              .map(p => (p.quests as any)?.level || 0);
+            
+            if (completed.length > 0) {
+              currentLevel = Math.max(...completed) + 1;
+            }
+          }
+
+          return {
+            ...topic,
+            progress,
+            totalLevels,
+            completedLevels,
+            currentLevel: Math.min(currentLevel, totalLevels - 1)
+          };
+        })
+      );
 
       setTopics(topicsWithProgress);
     } catch (error) {
@@ -81,12 +111,22 @@ const QuestsPage: React.FC = () => {
   const createTopic = async () => {
     if (!newTopicName.trim() || !user) return;
 
+    // Check if topic is supported by AI service
+    const isSupported = availableTopics.some(
+      topic => topic.toLowerCase() === newTopicName.toLowerCase()
+    );
+
+    if (!isSupported) {
+      toast.error(`Topic "${newTopicName}" is not supported yet. Please choose from: ${availableTopics.join(', ')}`);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('topics')
         .insert({
           name: newTopicName,
-          description: `Learn ${newTopicName} through interactive quests`,
+          description: `Master ${newTopicName} through AI-generated quests with progressive difficulty levels`,
           user_id: user.id,
           is_popular: false,
         })
@@ -108,7 +148,7 @@ const QuestsPage: React.FC = () => {
 
       await supabase.from('quests').insert(quests);
 
-      toast.success('Topic created successfully!');
+      toast.success(`${newTopicName} quest created with 6 progressive levels!`);
       setNewTopicName('');
       setShowCreateForm(false);
       fetchTopics();
@@ -122,11 +162,24 @@ const QuestsPage: React.FC = () => {
     if (!user) return;
 
     try {
+      // Check if user already has this topic
+      const { data: existingTopic } = await supabase
+        .from('topics')
+        .select('id')
+        .eq('name', topicName)
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingTopic) {
+        toast.info(`You already have a ${topicName} quest!`);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('topics')
         .insert({
           name: topicName,
-          description: `Master ${topicName} through gamified learning`,
+          description: `Master ${topicName} through AI-generated quests with progressive difficulty levels`,
           user_id: user.id,
           is_popular: false,
         })
@@ -148,12 +201,18 @@ const QuestsPage: React.FC = () => {
 
       await supabase.from('quests').insert(quests);
 
-      toast.success(`${topicName} quest created!`);
+      toast.success(`${topicName} quest created! Start with beginner level.`);
       fetchTopics();
     } catch (error) {
       console.error('Error creating popular topic:', error);
       toast.error('Error creating topic');
     }
+  };
+
+  const getDifficultyInfo = (level: number) => {
+    if (level <= 1) return { name: 'Beginner', color: 'text-green-400', bgColor: 'bg-green-400/20' };
+    if (level <= 3) return { name: 'Intermediate', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20' };
+    return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20' };
   };
 
   const filteredTopics = topics.filter(topic =>
@@ -179,10 +238,10 @@ const QuestsPage: React.FC = () => {
           className="text-center md:text-left"
         >
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-primary-400 to-fantasy-purple bg-clip-text text-transparent">
-            Quest Map
+            🗺️ Quest Map
           </h1>
           <p className="text-xl text-gray-300">
-            Choose your learning adventure and embark on epic quests
+            Choose your learning adventure with AI-generated questions
           </p>
         </motion.div>
 
@@ -220,11 +279,21 @@ const QuestsPage: React.FC = () => {
             exit={{ opacity: 0, height: 0 }}
             className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30"
           >
-            <h3 className="text-lg font-semibold mb-4">Create New Quest Topic</h3>
+            <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
+              <Brain className="w-5 h-5 text-fantasy-gold" />
+              <span>Create AI-Powered Quest</span>
+            </h3>
+            
+            <div className="mb-4">
+              <p className="text-sm text-gray-400 mb-2">
+                Supported topics: {availableTopics.join(', ')}
+              </p>
+            </div>
+            
             <div className="flex flex-col md:flex-row gap-4">
               <input
                 type="text"
-                placeholder="Enter topic name (e.g., Python, React, AI)"
+                placeholder="Enter topic name (e.g., JavaScript, Python, React)"
                 value={newTopicName}
                 onChange={(e) => setNewTopicName(e.target.value)}
                 className="flex-1 px-4 py-3 bg-dark-surface/50 border border-primary-800/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -260,9 +329,12 @@ const QuestsPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="space-y-4"
         >
-          <h2 className="text-2xl font-bold text-white">Popular Quests</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {popularTopics.map((topic, index) => (
+          <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+            <Star className="w-6 h-6 text-fantasy-gold" />
+            <span>Popular AI-Generated Quests</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {availableTopics.map((topic, index) => (
               <motion.button
                 key={topic}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -274,9 +346,10 @@ const QuestsPage: React.FC = () => {
                 className="bg-gradient-to-r from-dark-card/60 to-dark-surface/60 backdrop-blur-sm p-4 rounded-xl border border-primary-800/30 hover:border-primary-600/50 transition-all duration-300 text-sm font-medium text-center group"
               >
                 <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-lg mx-auto mb-2 flex items-center justify-center group-hover:animate-pulse">
-                  <Sparkles className="w-4 h-4 text-white" />
+                  <Brain className="w-4 h-4 text-white" />
                 </div>
                 <span className="group-hover:text-primary-300 transition-colors">{topic}</span>
+                <div className="text-xs text-gray-400 mt-1">AI Generated</div>
               </motion.button>
             ))}
           </div>
@@ -289,13 +362,16 @@ const QuestsPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="space-y-6"
         >
-          <h2 className="text-2xl font-bold text-white">Your Quests</h2>
+          <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+            <Target className="w-6 h-6 text-primary-400" />
+            <span>Your Learning Quests</span>
+          </h2>
           
           {filteredTopics.length === 0 ? (
             <div className="text-center py-12">
               <Crown className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-400 mb-2">No quests yet</h3>
-              <p className="text-gray-500 mb-6">Create your first quest topic to begin your learning adventure!</p>
+              <p className="text-gray-500 mb-6">Create your first AI-powered quest to begin your learning adventure!</p>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -307,88 +383,127 @@ const QuestsPage: React.FC = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTopics.map((topic, index) => (
-                <motion.div
-                  key={topic.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 hover:border-primary-600/50 transition-all duration-300 group cursor-pointer"
-                >
-                  <Link to={`/quests/${topic.id}`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-primary-300 transition-colors">
-                          {topic.name}
-                        </h3>
-                        <p className="text-gray-400 text-sm mb-3">
-                          {topic.description}
-                        </p>
-                      </div>
-                      {topic.is_popular && (
-                        <div className="flex items-center space-x-1 bg-fantasy-gold/20 px-2 py-1 rounded-lg">
-                          <Star className="w-3 h-3 text-fantasy-gold" />
-                          <span className="text-xs text-fantasy-gold font-medium">Popular</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-gray-400">Progress</span>
-                        <span className="text-gray-400">{topic.completedLevels}/{topic.totalLevels} levels</span>
-                      </div>
-                      <div className="w-full bg-dark-surface rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-primary-500 to-fantasy-purple h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${(topic.completedLevels / topic.totalLevels) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Level Indicators */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex space-x-2">
-                        {Array.from({ length: 6 }, (_, i) => (
-                          <div
-                            key={i}
-                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                              i < topic.completedLevels
-                                ? 'bg-gradient-to-r from-fantasy-emerald to-fantasy-gold text-white'
-                                : i === topic.completedLevels
-                                ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white animate-pulse'
-                                : 'bg-dark-surface text-gray-500'
-                            }`}
-                          >
-                            {i < topic.completedLevels ? (
-                              <CheckCircle className="w-3 h-3" />
-                            ) : i === topic.completedLevels ? (
-                              <Zap className="w-3 h-3" />
-                            ) : (
-                              <Lock className="w-3 h-3" />
-                            )}
+              {filteredTopics.map((topic, index) => {
+                const difficultyInfo = getDifficultyInfo(topic.currentLevel);
+                
+                return (
+                  <motion.div
+                    key={topic.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 hover:border-primary-600/50 transition-all duration-300 group cursor-pointer"
+                  >
+                    <Link to={`/quests/${topic.id}`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="text-xl font-bold text-white group-hover:text-primary-300 transition-colors">
+                              {topic.name}
+                            </h3>
+                            <Brain className="w-4 h-4 text-fantasy-gold" />
                           </div>
-                        ))}
+                          <p className="text-gray-400 text-sm mb-3">
+                            {topic.description}
+                          </p>
+                        </div>
+                        {topic.is_popular && (
+                          <div className="flex items-center space-x-1 bg-fantasy-gold/20 px-2 py-1 rounded-lg">
+                            <Star className="w-3 h-3 text-fantasy-gold" />
+                            <span className="text-xs text-fantasy-gold font-medium">Popular</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
 
-                    {/* Action Button */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-gray-400">
-                        {topic.completedLevels === 0 ? 'Start Quest' : 
-                         topic.completedLevels === topic.totalLevels ? 'Completed!' : 
-                         `Continue Level ${topic.completedLevels}`}
+                      {/* Current Level & Difficulty */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <Crown className="w-4 h-4 text-primary-400" />
+                          <span className="text-sm text-gray-300">Level {topic.currentLevel}</span>
+                        </div>
+                        <div className={`px-2 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
+                          <span className={`text-xs font-medium ${difficultyInfo.color}`}>
+                            {difficultyInfo.name}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center text-primary-400 text-sm font-medium group-hover:text-primary-300 transition-colors">
-                        <span>Enter</span>
-                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-gray-400">Progress</span>
+                          <span className="text-gray-400">{topic.completedLevels}/{topic.totalLevels} levels</span>
+                        </div>
+                        <div className="w-full bg-dark-surface rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-primary-500 to-fantasy-purple h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${topic.progress}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+
+                      {/* Level Indicators */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex space-x-1">
+                          {Array.from({ length: 6 }, (_, i) => {
+                            const isCompleted = i < topic.completedLevels;
+                            const isCurrent = i === topic.currentLevel;
+                            const isLocked = i > topic.currentLevel;
+                            
+                            return (
+                              <div
+                                key={i}
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                                  isCompleted
+                                    ? 'bg-gradient-to-r from-fantasy-emerald to-fantasy-gold text-white'
+                                    : isCurrent
+                                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white animate-pulse'
+                                    : 'bg-dark-surface text-gray-500'
+                                }`}
+                              >
+                                {isCompleted ? (
+                                  <CheckCircle className="w-3 h-3" />
+                                ) : isCurrent ? (
+                                  <Zap className="w-3 h-3" />
+                                ) : (
+                                  <Lock className="w-3 h-3" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-400">
+                          {topic.completedLevels === 0 ? (
+                            <span className="flex items-center space-x-1">
+                              <Sparkles className="w-3 h-3" />
+                              <span>Start AI Quest</span>
+                            </span>
+                          ) : topic.completedLevels === topic.totalLevels ? (
+                            <span className="flex items-center space-x-1 text-fantasy-gold">
+                              <Trophy className="w-3 h-3" />
+                              <span>Mastered!</span>
+                            </span>
+                          ) : (
+                            <span className="flex items-center space-x-1">
+                              <Brain className="w-3 h-3" />
+                              <span>Continue Level {topic.currentLevel}</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center text-primary-400 text-sm font-medium group-hover:text-primary-300 transition-colors">
+                          <span>Enter</span>
+                          <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </motion.div>
