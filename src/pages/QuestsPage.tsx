@@ -16,7 +16,10 @@ import {
   Brain,
   Target,
   Trophy,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  Users,
+  Award
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -33,6 +36,15 @@ interface Topic {
   user_id: string;
 }
 
+interface PopularTopicData {
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  popularity: number;
+}
+
 const QuestsPage: React.FC = () => {
   const { user } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -40,6 +52,58 @@ const QuestsPage: React.FC = () => {
   const [newTopicName, setNewTopicName] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Enhanced popular topics with more details
+  const popularTopicsData: PopularTopicData[] = [
+    {
+      name: 'JavaScript',
+      description: 'Master modern JavaScript fundamentals and advanced concepts',
+      icon: '⚡',
+      category: 'Programming',
+      difficulty: 'Beginner',
+      popularity: 95
+    },
+    {
+      name: 'Python',
+      description: 'Learn Python programming from basics to advanced topics',
+      icon: '🐍',
+      category: 'Programming',
+      difficulty: 'Beginner',
+      popularity: 92
+    },
+    {
+      name: 'React',
+      description: 'Build modern web applications with React framework',
+      icon: '⚛️',
+      category: 'Frontend',
+      difficulty: 'Intermediate',
+      popularity: 88
+    },
+    {
+      name: 'Machine Learning',
+      description: 'Explore AI and machine learning algorithms',
+      icon: '🤖',
+      category: 'AI/ML',
+      difficulty: 'Advanced',
+      popularity: 85
+    },
+    {
+      name: 'Data Science',
+      description: 'Analyze data and extract meaningful insights',
+      icon: '📊',
+      category: 'Data',
+      difficulty: 'Intermediate',
+      popularity: 82
+    },
+    {
+      name: 'Web Development',
+      description: 'Full-stack web development skills',
+      icon: '🌐',
+      category: 'Web',
+      difficulty: 'Beginner',
+      popularity: 90
+    }
+  ];
 
   // Get available topics from AI service
   const availableTopics = aiService.getAvailableTopics();
@@ -304,6 +368,15 @@ const QuestsPage: React.FC = () => {
     }
   };
 
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'text-green-400 bg-green-400/20';
+      case 'Intermediate': return 'text-yellow-400 bg-yellow-400/20';
+      case 'Advanced': return 'text-red-400 bg-red-400/20';
+      default: return 'text-gray-400 bg-gray-400/20';
+    }
+  };
+
   const filteredTopics = topics.filter(topic =>
     topic.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -430,54 +503,91 @@ const QuestsPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
             <Star className="w-6 h-6 text-fantasy-gold" />
             <span>Popular AI-Generated Quests</span>
+            <div className="bg-fantasy-gold/20 px-2 py-1 rounded-lg">
+              <span className="text-xs text-fantasy-gold font-medium">TRENDING</span>
+            </div>
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {availableTopics.map((topic, index) => {
-              const existingTopic = checkExistingTopic(topic);
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {popularTopicsData.map((topicData, index) => {
+              const existingTopic = checkExistingTopic(topicData.name);
               const isDisabled = !!existingTopic;
               
               return (
                 <motion.button
-                  key={topic}
+                  key={topicData.name}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.4, delay: 0.3 + index * 0.05 }}
-                  whileHover={!isDisabled ? { scale: 1.05, y: -2 } : {}}
-                  whileTap={!isDisabled ? { scale: 0.95 } : {}}
-                  onClick={() => !isDisabled && createPopularTopic(topic)}
+                  whileHover={!isDisabled ? { scale: 1.02, y: -2 } : {}}
+                  whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                  onClick={() => !isDisabled && createPopularTopic(topicData.name)}
                   disabled={isDisabled}
-                  className={`backdrop-blur-sm p-4 rounded-xl border transition-all duration-300 text-sm font-medium text-center group relative ${
+                  className={`backdrop-blur-sm p-6 rounded-xl border transition-all duration-300 text-left group relative ${
                     isDisabled 
                       ? 'bg-gray-600/30 border-gray-600/30 opacity-60 cursor-not-allowed'
                       : 'bg-gradient-to-r from-dark-card/60 to-dark-surface/60 border-primary-800/30 hover:border-primary-600/50'
                   }`}
                 >
+                  {/* Popular Badge */}
+                  <div className="absolute top-3 right-3">
+                    <div className="bg-fantasy-gold/20 px-2 py-1 rounded-lg">
+                      <span className="text-xs text-fantasy-gold font-medium">POPULAR</span>
+                    </div>
+                  </div>
+
                   {isDisabled && (
-                    <div className="absolute top-1 right-1">
-                      <CheckCircle className="w-4 h-4 text-fantasy-emerald" />
+                    <div className="absolute top-3 left-3">
+                      <CheckCircle className="w-5 h-5 text-fantasy-emerald" />
                     </div>
                   )}
                   
-                  <div className={`w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center ${
-                    isDisabled 
-                      ? 'bg-gray-600'
-                      : 'bg-gradient-to-r from-primary-500 to-fantasy-purple group-hover:animate-pulse'
-                  }`}>
-                    <Brain className="w-4 h-4 text-white" />
-                  </div>
-                  
-                  <span className={`transition-colors ${
-                    isDisabled 
-                      ? 'text-gray-400'
-                      : 'group-hover:text-primary-300'
-                  }`}>
-                    {topic}
-                  </span>
-                  
-                  <div className={`text-xs mt-1 ${
-                    isDisabled ? 'text-fantasy-emerald' : 'text-gray-400'
-                  }`}>
-                    {isDisabled ? 'Active' : 'AI Generated'}
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${
+                      isDisabled 
+                        ? 'bg-gray-600'
+                        : 'bg-gradient-to-r from-primary-500 to-fantasy-purple group-hover:animate-pulse'
+                    }`}>
+                      {topicData.icon}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className={`font-bold text-lg mb-2 transition-colors ${
+                        isDisabled 
+                          ? 'text-gray-400'
+                          : 'group-hover:text-primary-300'
+                      }`}>
+                        {topicData.name}
+                      </h3>
+                      
+                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+                        {topicData.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className={`px-2 py-1 rounded-lg text-xs font-medium ${getDifficultyColor(topicData.difficulty)}`}>
+                            {topicData.difficulty}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {topicData.category}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-1">
+                          <TrendingUp className="w-3 h-3 text-fantasy-gold" />
+                          <span className="text-xs text-fantasy-gold font-medium">
+                            {topicData.popularity}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className={`text-xs mt-2 ${
+                        isDisabled ? 'text-fantasy-emerald' : 'text-gray-400'
+                      }`}>
+                        {isDisabled ? '✅ Active Quest' : '🤖 AI Generated'}
+                      </div>
+                    </div>
                   </div>
                 </motion.button>
               );

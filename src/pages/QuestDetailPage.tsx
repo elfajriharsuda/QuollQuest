@@ -21,7 +21,13 @@ import {
   Star,
   PartyPopper,
   Rocket,
-  Award
+  Award,
+  Share2,
+  Instagram,
+  Facebook,
+  Twitter,
+  Copy,
+  Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -56,6 +62,7 @@ const QuestDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [nextLevelUnlocked, setNextLevelUnlocked] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const [quizState, setQuizState] = useState<QuizState>({
     currentQuestion: 0,
@@ -141,10 +148,6 @@ const QuestDetailPage: React.FC = () => {
       
       setQuestions(generatedQuestions);
       
-      // Show success message with topic and difficulty info
-      const difficulty = level <= 1 ? 'Beginner' : level <= 3 ? 'Intermediate' : 'Advanced';
-      toast.success(`🧠 Generated 10 ${difficulty} level questions for ${topicName}!`);
-      
     } catch (error) {
       console.error('Error generating questions:', error);
       toast.error('Error generating questions. Please try again.');
@@ -196,7 +199,6 @@ const QuestDetailPage: React.FC = () => {
       await saveQuizAttempt(score, passed);
 
       if (passed) {
-        // Show celebration toast
         toast.success(`🎉 Quest Level ${currentLevel} Completed! Score: ${score}%`, {
           duration: 5000,
           icon: '🏆'
@@ -403,6 +405,116 @@ const QuestDetailPage: React.FC = () => {
     return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20', icon: '🔥' };
   };
 
+  const generateShareText = () => {
+    const difficultyInfo = getDifficultyInfo(currentLevel);
+    const isTopicMastered = currentLevel === 5 && quizState.score >= 70;
+    
+    if (isTopicMastered) {
+      return `🎉 I just mastered ${topic?.name} on QuollQuest! Completed all 6 levels with ${quizState.score}% on the final challenge! 🏆 #QuollQuest #Learning #${topic?.name?.replace(/\s+/g, '')} #TechSkills`;
+    } else {
+      return `🚀 Just completed ${topic?.name} Level ${currentLevel} (${difficultyInfo.name}) on QuollQuest with ${quizState.score}%! 🎯 #QuollQuest #Learning #${topic?.name?.replace(/\s+/g, '')} #TechSkills`;
+    }
+  };
+
+  const shareToSocialMedia = (platform: string) => {
+    const shareText = generateShareText();
+    const url = window.location.href;
+    
+    let shareUrl = '';
+    
+    switch (platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}&quote=${encodeURIComponent(shareText)}`;
+        break;
+      case 'instagram':
+        // Instagram doesn't support direct sharing, so copy to clipboard
+        navigator.clipboard.writeText(shareText);
+        toast.success('📋 Share text copied! Paste it in your Instagram story or post.');
+        return;
+      case 'copy':
+        navigator.clipboard.writeText(`${shareText}\n\n${url}`);
+        toast.success('📋 Share text and link copied to clipboard!');
+        return;
+    }
+    
+    if (shareUrl) {
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+  };
+
+  const downloadCertificate = () => {
+    // Create a simple certificate image using canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+    
+    canvas.width = 800;
+    canvas.height = 600;
+    
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 800, 600);
+    gradient.addColorStop(0, '#0f0f23');
+    gradient.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 800, 600);
+    
+    // Border
+    ctx.strokeStyle = '#3b82f6';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(20, 20, 760, 560);
+    
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Certificate of Achievement', 400, 120);
+    
+    // Subtitle
+    ctx.font = '24px Arial';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText('QuollQuest Learning Platform', 400, 160);
+    
+    // User name
+    ctx.font = 'bold 36px Arial';
+    ctx.fillStyle = '#60a5fa';
+    ctx.fillText(profile?.username || 'Adventurer', 400, 240);
+    
+    // Achievement text
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#ffffff';
+    const isTopicMastered = currentLevel === 5 && quizState.score >= 70;
+    const achievementText = isTopicMastered 
+      ? `has mastered ${topic?.name} by completing all 6 levels`
+      : `has completed ${topic?.name} Level ${currentLevel}`;
+    ctx.fillText(achievementText, 400, 300);
+    
+    // Score
+    ctx.font = 'bold 32px Arial';
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`Score: ${quizState.score}%`, 400, 360);
+    
+    // Date
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#9ca3af';
+    ctx.fillText(`Completed on ${new Date().toLocaleDateString()}`, 400, 420);
+    
+    // Crown emoji (simplified)
+    ctx.font = '60px Arial';
+    ctx.fillText('👑', 400, 500);
+    
+    // Download
+    const link = document.createElement('a');
+    link.download = `QuollQuest-${topic?.name}-Level${currentLevel}-Certificate.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    
+    toast.success('🎓 Certificate downloaded!');
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center">
@@ -498,13 +610,14 @@ const QuestDetailPage: React.FC = () => {
   if (quizState.showResult) {
     const passed = quizState.score >= 70;
     const difficultyInfo = getDifficultyInfo(currentLevel);
+    const isTopicMastered = currentLevel === 5 && passed;
     
     return (
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 max-w-4xl w-full border border-primary-800/30"
+          className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 max-w-4xl w-full border border-primary-800/30 relative"
         >
           {/* Celebration Animation */}
           {passed && (
@@ -557,7 +670,7 @@ const QuestDetailPage: React.FC = () => {
             </motion.div>
             
             <h2 className="text-3xl font-bold text-white mb-4">
-              {passed ? '🎉 Quest Completed!' : '💪 Quest Failed'}
+              {passed ? (isTopicMastered ? '👑 Topic Mastered!' : '🎉 Quest Completed!') : '💪 Quest Failed'}
             </h2>
             
             <div className="flex items-center justify-center space-x-4 mb-4">
@@ -580,7 +693,9 @@ const QuestDetailPage: React.FC = () => {
             
             <p className="text-gray-300 text-lg mb-4">
               {passed 
-                ? `🎯 Excellent work! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`
+                ? (isTopicMastered 
+                  ? `🎯 Incredible! You've mastered all ${topic.name} levels! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`
+                  : `🎯 Excellent work! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`)
                 : '📚 You need 70% to pass. Review the explanations and try again!'
               }
             </p>
@@ -614,7 +729,7 @@ const QuestDetailPage: React.FC = () => {
                   </motion.div>
                 )}
 
-                {currentLevel === 5 && (
+                {isTopicMastered && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -628,6 +743,71 @@ const QuestDetailPage: React.FC = () => {
                     </div>
                   </motion.div>
                 )}
+
+                {/* Share Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-primary-500/10 border border-primary-500/30 rounded-lg p-4"
+                >
+                  <div className="flex items-center justify-center space-x-2 mb-3">
+                    <Share2 className="w-5 h-5 text-primary-400" />
+                    <span className="text-primary-400 font-semibold">
+                      🎊 Share Your Achievement!
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => shareToSocialMedia('twitter')}
+                      className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-white text-sm transition-colors"
+                    >
+                      <Twitter className="w-4 h-4" />
+                      <span>Twitter</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => shareToSocialMedia('facebook')}
+                      className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white text-sm transition-colors"
+                    >
+                      <Facebook className="w-4 h-4" />
+                      <span>Facebook</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => shareToSocialMedia('instagram')}
+                      className="flex items-center space-x-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-4 py-2 rounded-lg text-white text-sm transition-colors"
+                    >
+                      <Instagram className="w-4 h-4" />
+                      <span>Instagram</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => shareToSocialMedia('copy')}
+                      className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-white text-sm transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                      <span>Copy</span>
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={downloadCertificate}
+                      className="flex items-center space-x-2 bg-fantasy-gold hover:bg-fantasy-gold/80 px-4 py-2 rounded-lg text-white text-sm transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span>Certificate</span>
+                    </motion.button>
+                  </div>
+                </motion.div>
               </div>
             )}
           </div>
