@@ -61,7 +61,7 @@ export const useUserProfile = () => {
     try {
       // Call the database function to update login streak
       const { error } = await supabase.rpc('update_login_streak', {
-        user_uuid: user.id
+        p_user_id: user.id
       });
 
       if (error) {
