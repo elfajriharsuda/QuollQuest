@@ -17,7 +17,11 @@ import {
   RotateCcw,
   Sparkles,
   Brain,
-  Clock
+  Clock,
+  Star,
+  PartyPopper,
+  Rocket,
+  Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -51,6 +55,7 @@ const QuestDetailPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [nextLevelUnlocked, setNextLevelUnlocked] = useState(false);
   
   const [quizState, setQuizState] = useState<QuizState>({
     currentQuestion: 0,
@@ -105,6 +110,8 @@ const QuestDetailPage: React.FC = () => {
         }
       }
       
+      // Ensure level doesn't exceed maximum (5)
+      level = Math.min(level, 5);
       setCurrentLevel(level);
       
       // Generate AI questions for this topic and level
@@ -123,7 +130,7 @@ const QuestDetailPage: React.FC = () => {
     try {
       console.log(`Generating questions for topic: ${topicName}, level: ${level}`);
       
-      // Use the AI service to generate 10 topic-specific questions
+      // Use the AI service to generate 10 topic-specific questions for the exact level
       const generatedQuestions = await aiService.generateQuestionsForTopic(topicName, level);
       
       console.log(`Generated ${generatedQuestions.length} questions:`, generatedQuestions);
@@ -136,7 +143,7 @@ const QuestDetailPage: React.FC = () => {
       
       // Show success message with topic and difficulty info
       const difficulty = level <= 1 ? 'Beginner' : level <= 3 ? 'Intermediate' : 'Advanced';
-      toast.success(`Generated 10 ${difficulty} level questions for ${topicName}!`);
+      toast.success(`🧠 Generated 10 ${difficulty} level questions for ${topicName}!`);
       
     } catch (error) {
       console.error('Error generating questions:', error);
@@ -189,7 +196,11 @@ const QuestDetailPage: React.FC = () => {
       await saveQuizAttempt(score, passed);
 
       if (passed) {
-        toast.success(`Quest completed! Score: ${score}%`);
+        // Show celebration toast
+        toast.success(`🎉 Quest Level ${currentLevel} Completed! Score: ${score}%`, {
+          duration: 5000,
+          icon: '🏆'
+        });
         
         // Award experience points based on level and performance
         const baseExp = 50; // Base EXP for completing a quest
@@ -200,14 +211,19 @@ const QuestDetailPage: React.FC = () => {
         if (profile && addExperience) {
           const result = await addExperience(expGained);
           if (result?.leveledUp) {
-            toast.success(`🎉 Level up! You are now level ${result.newLevel}!`, {
+            toast.success(`👑 Level up! You are now level ${result.newLevel}!`, {
               duration: 5000,
-              icon: '👑'
+              icon: '🎊'
             });
           }
         }
+
+        // Check if next level was unlocked
+        if (currentLevel < 5) {
+          setNextLevelUnlocked(true);
+        }
       } else {
-        toast.error(`Quest failed. Score: ${score}%. You need 70% to pass.`);
+        toast.error(`💪 Quest failed. Score: ${score}%. You need 70% to pass.`);
       }
     } else {
       setQuizState(prev => ({
@@ -292,7 +308,7 @@ const QuestDetailPage: React.FC = () => {
       }
 
       // If passed, unlock next level
-      if (passed) {
+      if (passed && currentLevel < 5) {
         // Create next level quest if it doesn't exist
         const { data: nextQuest } = await supabase
           .from('quests')
@@ -360,13 +376,31 @@ const QuestDetailPage: React.FC = () => {
       completed: false,
       score: 0,
     });
+    setNextLevelUnlocked(false);
     generateQuestionsForTopic(topic!.name, currentLevel);
   };
 
+  const goToNextLevel = () => {
+    if (currentLevel < 5) {
+      setCurrentLevel(currentLevel + 1);
+      setQuizState({
+        currentQuestion: 0,
+        answers: [],
+        showResult: false,
+        showFeedback: false,
+        isCorrect: false,
+        completed: false,
+        score: 0,
+      });
+      setNextLevelUnlocked(false);
+      generateQuestionsForTopic(topic!.name, currentLevel + 1);
+    }
+  };
+
   const getDifficultyInfo = (level: number) => {
-    if (level <= 1) return { name: 'Beginner', color: 'text-green-400', bgColor: 'bg-green-400/20' };
-    if (level <= 3) return { name: 'Intermediate', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20' };
-    return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20' };
+    if (level <= 1) return { name: 'Beginner', color: 'text-green-400', bgColor: 'bg-green-400/20', icon: '🌱' };
+    if (level <= 3) return { name: 'Intermediate', color: 'text-yellow-400', bgColor: 'bg-yellow-400/20', icon: '⚡' };
+    return { name: 'Advanced', color: 'text-red-400', bgColor: 'bg-red-400/20', icon: '🔥' };
   };
 
   if (loading) {
@@ -408,7 +442,7 @@ const QuestDetailPage: React.FC = () => {
               <Target className="w-4 h-4 text-primary-400" />
               <span className="text-gray-300">Level {currentLevel}</span>
               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${difficultyInfo.bgColor} ${difficultyInfo.color}`}>
-                {difficultyInfo.name}
+                {difficultyInfo.icon} {difficultyInfo.name}
               </span>
             </div>
             
@@ -472,6 +506,39 @@ const QuestDetailPage: React.FC = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 max-w-4xl w-full border border-primary-800/30"
         >
+          {/* Celebration Animation */}
+          {passed && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute inset-0 pointer-events-none"
+            >
+              {[...Array(20)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ 
+                    opacity: 1, 
+                    y: 0, 
+                    x: Math.random() * window.innerWidth,
+                    scale: Math.random() * 0.5 + 0.5
+                  }}
+                  animate={{ 
+                    opacity: 0, 
+                    y: window.innerHeight,
+                    rotate: Math.random() * 360
+                  }}
+                  transition={{ 
+                    duration: Math.random() * 3 + 2,
+                    delay: Math.random() * 2
+                  }}
+                  className="absolute text-2xl"
+                >
+                  {['🎉', '🎊', '⭐', '🏆', '👑'][Math.floor(Math.random() * 5)]}
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
           <div className="text-center mb-8">
             <motion.div
               animate={{ scale: [1, 1.1, 1] }}
@@ -496,11 +563,13 @@ const QuestDetailPage: React.FC = () => {
             <div className="flex items-center justify-center space-x-4 mb-4">
               <div className={`px-3 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
                 <span className={`text-sm font-medium ${difficultyInfo.color}`}>
-                  {difficultyInfo.name} Level
+                  {difficultyInfo.icon} {difficultyInfo.name} Level
                 </span>
               </div>
               <div className="text-gray-400">•</div>
               <div className="text-gray-300">{topic.name}</div>
+              <div className="text-gray-400">•</div>
+              <div className="text-gray-300">Level {currentLevel}</div>
             </div>
             
             <div className="text-6xl font-bold mb-4">
@@ -511,26 +580,64 @@ const QuestDetailPage: React.FC = () => {
             
             <p className="text-gray-300 text-lg mb-4">
               {passed 
-                ? `Excellent work! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`
-                : 'You need 70% to pass. Review the explanations and try again!'
+                ? `🎯 Excellent work! You earned ${50 * (currentLevel + 1) + Math.floor((quizState.score - 70) / 10) * 10} EXP!`
+                : '📚 You need 70% to pass. Review the explanations and try again!'
               }
             </p>
 
             {passed && (
-              <div className="bg-fantasy-emerald/20 border border-fantasy-emerald/30 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-center space-x-2">
-                  <Zap className="w-5 h-5 text-fantasy-emerald" />
-                  <span className="text-fantasy-emerald font-semibold">
-                    Quest Mastered! Next level unlocked!
-                  </span>
+              <div className="space-y-4 mb-6">
+                <div className="bg-fantasy-emerald/20 border border-fantasy-emerald/30 rounded-lg p-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <Award className="w-5 h-5 text-fantasy-emerald" />
+                    <span className="text-fantasy-emerald font-semibold">
+                      🏆 Quest Level {currentLevel} Mastered!
+                    </span>
+                  </div>
                 </div>
+
+                {nextLevelUnlocked && currentLevel < 5 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-primary-600/20 border border-primary-600/30 rounded-lg p-4"
+                  >
+                    <div className="flex items-center justify-center space-x-2 mb-3">
+                      <Rocket className="w-5 h-5 text-primary-400" />
+                      <span className="text-primary-400 font-semibold">
+                        🚀 Next Level Unlocked!
+                      </span>
+                    </div>
+                    <p className="text-gray-300 text-sm">
+                      Level {currentLevel + 1} is now available. Ready for the next challenge?
+                    </p>
+                  </motion.div>
+                )}
+
+                {currentLevel === 5 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-fantasy-gold/20 border border-fantasy-gold/30 rounded-lg p-4"
+                  >
+                    <div className="flex items-center justify-center space-x-2">
+                      <Crown className="w-5 h-5 text-fantasy-gold" />
+                      <span className="text-fantasy-gold font-semibold">
+                        👑 Topic Mastered! You've completed all levels!
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </div>
 
           {/* Question Review */}
           <div className="space-y-4 mb-8 max-h-96 overflow-y-auto">
-            <h3 className="text-lg font-semibold text-white mb-4">📝 Question Review</h3>
+            <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+              <Brain className="w-5 h-5 text-fantasy-gold" />
+              <span>📝 Question Review</span>
+            </h3>
             {questions.map((question, index) => {
               const userAnswer = quizState.answers[index];
               const isCorrect = userAnswer === question.correct_answer;
@@ -588,6 +695,18 @@ const QuestDetailPage: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4">
+            {passed && nextLevelUnlocked && currentLevel < 5 && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={goToNextLevel}
+                className="flex-1 bg-gradient-to-r from-fantasy-emerald to-fantasy-gold hover:from-fantasy-emerald/90 hover:to-fantasy-gold/90 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2"
+              >
+                <Rocket className="w-5 h-5" />
+                <span>Next Level ({currentLevel + 1})</span>
+              </motion.button>
+            )}
+            
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -640,7 +759,7 @@ const QuestDetailPage: React.FC = () => {
               </div>
               <div className={`px-3 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
                 <span className={`text-sm font-medium ${difficultyInfo.color}`}>
-                  {difficultyInfo.name}
+                  {difficultyInfo.icon} {difficultyInfo.name}
                 </span>
               </div>
             </div>
