@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -26,25 +26,137 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const mounted = useRef(true);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    mounted.current = true;
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        
+        if (mounted.current) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+        if (mounted.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    getInitialSession();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        if (mounted.current) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+
+        // Handle specific auth events
+        if (event === 'SIGNED_OUT') {
+          // Clear any cached data
+          if (mounted.current) {
+            setUser(null);
+            setSession(null);
+          }
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        } else if (event === 'SIGNED_IN') {
+          console.log('User signed in');
+        }
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Periodic session refresh to prevent logout
+    const startPeriodicRefresh = () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      refreshTimeoutRef.current = setTimeout(async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (mounted.current && session) {
+            setSession(session);
+            setUser(session.user);
+          }
+          startPeriodicRefresh(); // Schedule next refresh
+        } catch (error) {
+          console.error('Error refreshing session:', error);
+        }
+      }, 30000); // Refresh every 30 seconds
+    };
+
+    startPeriodicRefresh();
+
+    // Handle page visibility changes to prevent logout on tab switch
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        // When tab becomes visible again, refresh the session
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (mounted.current && session) {
+            setSession(session);
+            setUser(session.user);
+          }
+        } catch (error) {
+          console.error('Error refreshing session on visibility change:', error);
+        }
+      }
+    };
+
+    // Handle page focus to refresh session
+    const handleFocus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted.current && session) {
+          setSession(session);
+          setUser(session.user);
+        }
+      } catch (error) {
+        console.error('Error refreshing session on focus:', error);
+      }
+    };
+
+    // Handle before unload to persist session
+    const handleBeforeUnload = () => {
+      // Don't clear session on page unload
+      // This prevents logout when switching tabs or refreshing
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function
+    return () => {
+      mounted.current = false;
+      subscription.unsubscribe();
+      
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
@@ -77,6 +189,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
+    // Clear the refresh timeout
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    
     await supabase.auth.signOut();
   };
 
