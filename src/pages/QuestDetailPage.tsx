@@ -220,8 +220,8 @@ const QuestDetailPage: React.FC = () => {
       }
       
       setQuestions(generatedQuestions);
-      // Store the questions that will be answered for review
-      setAnsweredQuestions([...generatedQuestions]);
+      // Store the questions that will be answered for review - make a deep copy
+      setAnsweredQuestions(JSON.parse(JSON.stringify(generatedQuestions)));
       
     } catch (error) {
       console.error('Error generating questions:', error);
@@ -257,9 +257,9 @@ const QuestDetailPage: React.FC = () => {
     const nextQuestion = quizState.currentQuestion + 1;
     
     if (nextQuestion >= questions.length) {
-      // Quiz completed - calculate final score
+      // Quiz completed - calculate final score using the stored answered questions
       const correctAnswers = quizState.answers.filter((answer, index) => 
-        answer === answeredQuestions[index].correct_answer
+        answer === answeredQuestions[index]?.correct_answer
       ).length;
       
       const totalQuestions = answeredQuestions.length;
