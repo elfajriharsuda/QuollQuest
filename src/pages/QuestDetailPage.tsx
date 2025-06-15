@@ -27,7 +27,9 @@ import {
   Facebook,
   Twitter,
   Copy,
-  Download
+  Download,
+  Timer,
+  AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -48,6 +50,9 @@ interface QuizState {
   isCorrect: boolean;
   completed: boolean;
   score: number;
+  timeLeft: number;
+  isTimerActive: boolean;
+  autoAnswered: boolean;
 }
 
 const QuestDetailPage: React.FC = () => {
@@ -72,7 +77,73 @@ const QuestDetailPage: React.FC = () => {
     isCorrect: false,
     completed: false,
     score: 0,
+    timeLeft: 20,
+    isTimerActive: false,
+    autoAnswered: false,
   });
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (quizState.isTimerActive && quizState.timeLeft > 0 && !quizState.showFeedback) {
+      interval = setInterval(() => {
+        setQuizState(prev => {
+          const newTimeLeft = prev.timeLeft - 1;
+          
+          // Time's up - auto answer as wrong
+          if (newTimeLeft <= 0) {
+            const currentQuestion = questions[prev.currentQuestion];
+            const newAnswers = [...prev.answers];
+            newAnswers[prev.currentQuestion] = -1; // -1 indicates no answer/timeout
+            
+            return {
+              ...prev,
+              timeLeft: 0,
+              isTimerActive: false,
+              showFeedback: true,
+              isCorrect: false,
+              autoAnswered: true,
+              answers: newAnswers,
+            };
+          }
+          
+          return { ...prev, timeLeft: newTimeLeft };
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [quizState.isTimerActive, quizState.timeLeft, quizState.showFeedback, questions, quizState.currentQuestion]);
+
+  // Auto-progression effect (5 seconds after showing feedback)
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    if (quizState.showFeedback) {
+      timeout = setTimeout(() => {
+        handleNextQuestion();
+      }, 5000); // 5 seconds delay
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [quizState.showFeedback]);
+
+  // Start timer when question changes
+  useEffect(() => {
+    if (questions.length > 0 && !quizState.showResult && !quizState.showFeedback) {
+      setQuizState(prev => ({
+        ...prev,
+        timeLeft: 20,
+        isTimerActive: true,
+        autoAnswered: false,
+      }));
+    }
+  }, [quizState.currentQuestion, questions.length, quizState.showResult]);
 
   useEffect(() => {
     if (id) {
@@ -160,7 +231,7 @@ const QuestDetailPage: React.FC = () => {
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
-    if (quizState.showFeedback) return;
+    if (quizState.showFeedback || !quizState.isTimerActive) return;
 
     const currentQuestion = questions[quizState.currentQuestion];
     const isCorrect = answerIndex === currentQuestion.correct_answer;
@@ -173,6 +244,8 @@ const QuestDetailPage: React.FC = () => {
       answers: newAnswers,
       showFeedback: true,
       isCorrect,
+      isTimerActive: false,
+      autoAnswered: false,
     }));
   };
 
@@ -193,6 +266,7 @@ const QuestDetailPage: React.FC = () => {
         completed: true,
         score,
         showResult: true,
+        isTimerActive: false,
       }));
 
       // Save quiz attempt to database
@@ -233,6 +307,9 @@ const QuestDetailPage: React.FC = () => {
         currentQuestion: nextQuestion,
         showFeedback: false,
         isCorrect: false,
+        timeLeft: 20,
+        isTimerActive: true,
+        autoAnswered: false,
       }));
     }
   };
@@ -377,6 +454,9 @@ const QuestDetailPage: React.FC = () => {
       isCorrect: false,
       completed: false,
       score: 0,
+      timeLeft: 20,
+      isTimerActive: false,
+      autoAnswered: false,
     });
     setNextLevelUnlocked(false);
     generateQuestionsForTopic(topic!.name, currentLevel);
@@ -393,6 +473,9 @@ const QuestDetailPage: React.FC = () => {
         isCorrect: false,
         completed: false,
         score: 0,
+        timeLeft: 20,
+        isTimerActive: false,
+        autoAnswered: false,
       });
       setNextLevelUnlocked(false);
       generateQuestionsForTopic(topic!.name, currentLevel + 1);
@@ -513,6 +596,18 @@ const QuestDetailPage: React.FC = () => {
     link.click();
     
     toast.success('🎓 Certificate downloaded!');
+  };
+
+  const getTimerColor = () => {
+    if (quizState.timeLeft > 10) return 'text-green-400';
+    if (quizState.timeLeft > 5) return 'text-yellow-400';
+    return 'text-red-400';
+  };
+
+  const getTimerBgColor = () => {
+    if (quizState.timeLeft > 10) return 'bg-green-400/20';
+    if (quizState.timeLeft > 5) return 'bg-yellow-400/20';
+    return 'bg-red-400/20';
   };
 
   if (loading) {
@@ -821,6 +916,7 @@ const QuestDetailPage: React.FC = () => {
             {questions.map((question, index) => {
               const userAnswer = quizState.answers[index];
               const isCorrect = userAnswer === question.correct_answer;
+              const wasTimeout = userAnswer === -1;
               
               return (
                 <div
@@ -849,7 +945,7 @@ const QuestDetailPage: React.FC = () => {
                         <p className="text-xs">
                           <span className="text-gray-400">Your answer: </span>
                           <span className={isCorrect ? 'text-fantasy-emerald' : 'text-red-400'}>
-                            {question.options[userAnswer]}
+                            {wasTimeout ? '⏰ Time expired - No answer' : question.options[userAnswer]}
                           </span>
                         </p>
                         {!isCorrect && (
@@ -974,12 +1070,29 @@ const QuestDetailPage: React.FC = () => {
             transition={{ duration: 0.3 }}
             className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 border border-primary-800/30"
           >
-            <div className="mb-8">
-              <div className="flex items-center space-x-2 mb-4">
+            {/* Timer */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
                 <Brain className="w-5 h-5 text-fantasy-gold" />
                 <span className="text-sm text-fantasy-gold font-medium">AI Generated Question</span>
               </div>
               
+              <motion.div
+                animate={quizState.timeLeft <= 5 ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ duration: 0.5, repeat: quizState.timeLeft <= 5 ? Infinity : 0 }}
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${getTimerBgColor()}`}
+              >
+                <Timer className={`w-4 h-4 ${getTimerColor()}`} />
+                <span className={`text-sm font-bold ${getTimerColor()}`}>
+                  {quizState.timeLeft}s
+                </span>
+                {quizState.timeLeft <= 5 && (
+                  <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
+                )}
+              </motion.div>
+            </div>
+            
+            <div className="mb-8">
               <h2 className="text-2xl font-bold text-white mb-6 leading-relaxed whitespace-pre-line">
                 {currentQuestion.question_text}
               </h2>
@@ -992,14 +1105,15 @@ const QuestDetailPage: React.FC = () => {
                 const isCorrect = index === currentQuestion.correct_answer;
                 const showCorrectAnswer = quizState.showFeedback && isCorrect;
                 const showWrongAnswer = quizState.showFeedback && isSelected && !isCorrect;
+                const isDisabled = quizState.showFeedback || !quizState.isTimerActive;
                 
                 return (
                   <motion.button
                     key={index}
-                    whileHover={!quizState.showFeedback ? { scale: 1.02, x: 10 } : {}}
-                    whileTap={!quizState.showFeedback ? { scale: 0.98 } : {}}
+                    whileHover={!isDisabled ? { scale: 1.02, x: 10 } : {}}
+                    whileTap={!isDisabled ? { scale: 0.98 } : {}}
                     onClick={() => handleAnswerSelect(index)}
-                    disabled={quizState.showFeedback}
+                    disabled={isDisabled}
                     className={`w-full p-6 rounded-xl text-left transition-all duration-300 border-2 ${
                       showCorrectAnswer
                         ? 'bg-fantasy-emerald/20 border-fantasy-emerald text-white'
@@ -1007,8 +1121,10 @@ const QuestDetailPage: React.FC = () => {
                         ? 'bg-red-500/20 border-red-500 text-white'
                         : isSelected
                         ? 'bg-primary-600/30 border-primary-500 text-white'
-                        : 'bg-dark-surface/50 border-primary-800/30 text-gray-300 hover:border-primary-600/50 hover:bg-dark-surface/70'
-                    } ${quizState.showFeedback ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                        : isDisabled
+                        ? 'bg-dark-surface/30 border-gray-600/30 text-gray-500 cursor-not-allowed'
+                        : 'bg-dark-surface/50 border-primary-800/30 text-gray-300 hover:border-primary-600/50 hover:bg-dark-surface/70 cursor-pointer'
+                    }`}
                   >
                     <div className="flex items-center space-x-4">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
@@ -1018,6 +1134,8 @@ const QuestDetailPage: React.FC = () => {
                           ? 'bg-red-500 text-white'
                           : isSelected
                           ? 'bg-primary-500 text-white'
+                          : isDisabled
+                          ? 'bg-gray-600 text-gray-400'
                           : 'bg-gray-600 text-gray-300'
                       }`}>
                         {String.fromCharCode(65 + index)}
@@ -1035,7 +1153,7 @@ const QuestDetailPage: React.FC = () => {
               })}
             </div>
 
-            {/* Feedback & Next Button */}
+            {/* Feedback */}
             {quizState.showFeedback && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -1056,7 +1174,12 @@ const QuestDetailPage: React.FC = () => {
                     <span className={`font-semibold text-lg ${
                       quizState.isCorrect ? 'text-fantasy-emerald' : 'text-red-500'
                     }`}>
-                      {quizState.isCorrect ? '✅ Correct!' : '❌ Incorrect'}
+                      {quizState.autoAnswered 
+                        ? '⏰ Time\'s Up!' 
+                        : quizState.isCorrect 
+                        ? '✅ Correct!' 
+                        : '❌ Incorrect'
+                      }
                     </span>
                   </div>
                   {currentQuestion.explanation && (
@@ -1068,15 +1191,10 @@ const QuestDetailPage: React.FC = () => {
                   )}
                 </div>
 
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleNextQuestion}
-                  className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center space-x-2 mx-auto"
-                >
-                  <span>{quizState.currentQuestion === questions.length - 1 ? 'Complete Quest' : 'Next Question'}</span>
-                  <ArrowRight className="w-5 h-5" />
-                </motion.button>
+                <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span>Auto-advancing in 5 seconds...</span>
+                </div>
               </motion.div>
             )}
           </motion.div>
