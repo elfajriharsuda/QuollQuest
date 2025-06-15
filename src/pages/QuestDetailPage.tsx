@@ -119,11 +119,12 @@ const QuestDetailPage: React.FC = () => {
     };
   }, [quizState.isTimerActive, quizState.timeLeft, quizState.showFeedback, questions, quizState.currentQuestion]);
 
-  // Auto-progression effect (5 seconds after showing feedback)
+  // Auto-progression effect (5 seconds after showing feedback) - ONLY for non-final questions
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     
-    if (quizState.showFeedback) {
+    // Only auto-advance if it's NOT the last question and feedback is showing
+    if (quizState.showFeedback && quizState.currentQuestion < questions.length - 1) {
       timeout = setTimeout(() => {
         handleNextQuestion();
       }, 5000); // 5 seconds delay
@@ -132,7 +133,7 @@ const QuestDetailPage: React.FC = () => {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [quizState.showFeedback]);
+  }, [quizState.showFeedback, quizState.currentQuestion, questions.length]);
 
   // Start timer when question changes
   useEffect(() => {
@@ -1037,6 +1038,7 @@ const QuestDetailPage: React.FC = () => {
   const currentQuestion = questions[quizState.currentQuestion];
   const progress = ((quizState.currentQuestion + 1) / questions.length) * 100;
   const difficultyInfo = getDifficultyInfo(currentLevel);
+  const isLastQuestion = quizState.currentQuestion === questions.length - 1;
 
   return (
     <div className="min-h-screen bg-fantasy-bg text-white p-4">
@@ -1217,10 +1219,27 @@ const QuestDetailPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>Auto-advancing in 5 seconds...</span>
-                </div>
+                {/* Auto-advance message - only show for non-final questions */}
+                {!isLastQuestion && (
+                  <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>Auto-advancing in 5 seconds...</span>
+                  </div>
+                )}
+
+                {/* Manual next button for final question */}
+                {isLastQuestion && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleNextQuestion}
+                    className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 mx-auto mt-4"
+                  >
+                    <Trophy className="w-5 h-5" />
+                    <span>View Results</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.button>
+                )}
               </motion.div>
             )}
           </motion.div>
