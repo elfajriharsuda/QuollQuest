@@ -64,6 +64,7 @@ const QuestDetailPage: React.FC = () => {
   const [topic, setTopic] = useState<Topic | null>(null);
   const [currentLevel, setCurrentLevel] = useState(0);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [answeredQuestions, setAnsweredQuestions] = useState<Question[]>([]); // Store questions that were actually answered
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [nextLevelUnlocked, setNextLevelUnlocked] = useState(false);
@@ -218,6 +219,8 @@ const QuestDetailPage: React.FC = () => {
       }
       
       setQuestions(generatedQuestions);
+      // Store the questions that will be answered for review
+      setAnsweredQuestions([...generatedQuestions]);
       
     } catch (error) {
       console.error('Error generating questions:', error);
@@ -253,12 +256,13 @@ const QuestDetailPage: React.FC = () => {
     const nextQuestion = quizState.currentQuestion + 1;
     
     if (nextQuestion >= questions.length) {
-      // Quiz completed
+      // Quiz completed - calculate final score
       const correctAnswers = quizState.answers.filter((answer, index) => 
-        answer === questions[index].correct_answer
+        answer === answeredQuestions[index].correct_answer
       ).length;
       
-      const score = Math.round((correctAnswers / questions.length) * 100);
+      const totalQuestions = answeredQuestions.length;
+      const score = Math.round((correctAnswers / totalQuestions) * 100);
       const passed = score >= 70;
 
       setQuizState(prev => ({
@@ -707,6 +711,12 @@ const QuestDetailPage: React.FC = () => {
     const difficultyInfo = getDifficultyInfo(currentLevel);
     const isTopicMastered = currentLevel === 5 && passed;
     
+    // Calculate correct and incorrect answers for display
+    const correctAnswers = quizState.answers.filter((answer, index) => 
+      answer === answeredQuestions[index]?.correct_answer
+    ).length;
+    const incorrectAnswers = answeredQuestions.length - correctAnswers;
+    
     return (
       <div className="min-h-screen bg-fantasy-bg flex items-center justify-center p-4">
         <motion.div
@@ -784,6 +794,22 @@ const QuestDetailPage: React.FC = () => {
               <span className={passed ? 'text-fantasy-emerald' : 'text-red-500'}>
                 {quizState.score}%
               </span>
+            </div>
+            
+            {/* Score Breakdown */}
+            <div className="flex items-center justify-center space-x-8 mb-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-fantasy-emerald">{correctAnswers}</div>
+                <div className="text-sm text-gray-400">Correct</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-400">{incorrectAnswers}</div>
+                <div className="text-sm text-gray-400">Incorrect</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-300">{answeredQuestions.length}</div>
+                <div className="text-sm text-gray-400">Total</div>
+              </div>
             </div>
             
             <p className="text-gray-300 text-lg mb-4">
@@ -907,20 +933,20 @@ const QuestDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Question Review */}
+          {/* Question Review - Now shows the actual questions that were answered */}
           <div className="space-y-4 mb-8 max-h-96 overflow-y-auto">
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
               <Brain className="w-5 h-5 text-fantasy-gold" />
-              <span>📝 Question Review</span>
+              <span>📝 Question Review ({correctAnswers}/{answeredQuestions.length} Correct)</span>
             </h3>
-            {questions.map((question, index) => {
+            {answeredQuestions.map((question, index) => {
               const userAnswer = quizState.answers[index];
               const isCorrect = userAnswer === question.correct_answer;
               const wasTimeout = userAnswer === -1;
               
               return (
                 <div
-                  key={question.id}
+                  key={`review-${index}`}
                   className={`p-4 rounded-lg border ${
                     isCorrect
                       ? 'bg-fantasy-emerald/10 border-fantasy-emerald/30'
