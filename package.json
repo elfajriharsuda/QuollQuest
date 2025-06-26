@@ -12,6 +12,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
+    "caniuse-lite": "^1.0.30001726",
     "client-only": "^0.0.1",
     "clsx": "^2.0.0",
     "framer-motion": "^10.16.16",
