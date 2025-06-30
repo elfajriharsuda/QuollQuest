@@ -48,7 +48,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
     },
   };
   
-  // Assign the dummy client
   supabase = dummyClient;
 } else {
   // Validate URL format
