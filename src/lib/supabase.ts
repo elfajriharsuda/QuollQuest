@@ -107,28 +107,30 @@ if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
     };
     
     supabase = dummyClient;
-    return;
   }
 
-  // Create the real Supabase client
-  console.log('🚀 Initializing Supabase client...');
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce',
-      storage: window.localStorage,
-      storageKey: 'quollquest-auth-token',
-    },
-    global: {
-      headers: {
-        'X-Client-Info': 'quollquest-web',
+  // Only create the real Supabase client if we haven't already assigned a dummy client
+  if (!supabase) {
+    // Create the real Supabase client
+    console.log('🚀 Initializing Supabase client...');
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        storage: window.localStorage,
+        storageKey: 'quollquest-auth-token',
       },
-    },
-  });
-  
-  console.log('✅ Supabase client initialized successfully');
+      global: {
+        headers: {
+          'X-Client-Info': 'quollquest-web',
+        },
+      },
+    });
+    
+    console.log('✅ Supabase client initialized successfully');
+  }
 }
 
 export { supabase };
