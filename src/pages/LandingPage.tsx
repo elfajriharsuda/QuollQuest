@@ -94,7 +94,7 @@ const LandingPage: React.FC = () => {
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 className="w-20 h-20 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-full flex items-center justify-center shadow-2xl shadow-primary-500/25 p-2"
               >
-                <QuollMascot animate={true} size="lg" className="w-full h-full text-white" />
+                <QuollMascot animate={false} size="lg" className="w-full h-full text-white" />
               </motion.div>
             </div>
             <h1 className="text-6xl md:text-8xl font-bold mb-6 bg-gradient-to-r from-primary-400 via-fantasy-purple to-primary-600 bg-clip-text text-transparent">
