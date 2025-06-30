@@ -26,7 +26,7 @@ import toast from 'react-hot-toast';
 
 const ProfilePage: React.FC = () => {
   const { user } = useAuth();
-  const { profile, stats, loading, updateProfile } = useUserProfile();
+  const { profile, stats, loading, updateProfile, refreshProfile } = useUserProfile();
   const [editing, setEditing] = useState(false);
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
   const [newUsername, setNewUsername] = useState('');
@@ -64,6 +64,8 @@ const ProfilePage: React.FC = () => {
       if (result?.success) {
         toast.success('Avatar updated successfully!');
         setShowAvatarSelector(false);
+        // Refresh profile to get the latest data
+        await refreshProfile();
       } else {
         toast.error('Error updating avatar');
       }
@@ -95,6 +97,8 @@ const ProfilePage: React.FC = () => {
       if (result?.success) {
         toast.success('Custom avatar uploaded successfully!');
         setShowAvatarSelector(false);
+        // Refresh profile to get the latest data
+        await refreshProfile();
       } else {
         toast.error('Error updating avatar');
       }
@@ -182,6 +186,8 @@ const ProfilePage: React.FC = () => {
                 avatarId={profile.avatar_url} 
                 size="xl" 
                 className="shadow-2xl"
+                userId={user?.id}
+                animate={true}
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}

@@ -111,8 +111,52 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
         return;
       }
       
+      // Create preview URL for uploaded file
+      const previewUrl = URL.createObjectURL(file);
+      setSelectedAvatar(previewUrl);
+      
       onFileUpload(file);
     }
+  };
+
+  // Get the preview component for selected avatar
+  const getPreviewComponent = () => {
+    if (!selectedAvatar) return null;
+
+    // If it's a URL (uploaded file or custom image), show the image
+    if (selectedAvatar.startsWith('http') || selectedAvatar.startsWith('blob:')) {
+      return (
+        <img
+          src={selectedAvatar}
+          alt="Selected avatar"
+          className="w-full h-full object-cover rounded-full"
+        />
+      );
+    }
+
+    // If it's a default avatar ID, render the component
+    const avatar = defaultAvatars.find(a => a.id === selectedAvatar);
+    if (avatar) {
+      const AvatarComponent = avatar.component;
+      return (
+        <div className="w-full h-full p-2">
+          <AvatarComponent />
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const getSelectedAvatarName = () => {
+    if (!selectedAvatar) return 'No avatar selected';
+
+    if (selectedAvatar.startsWith('http') || selectedAvatar.startsWith('blob:')) {
+      return 'Custom Avatar';
+    }
+
+    const avatar = defaultAvatars.find(a => a.id === selectedAvatar);
+    return avatar ? avatar.name : 'Unknown Avatar';
   };
 
   return (
@@ -202,27 +246,11 @@ const AvatarSelector: React.FC<AvatarSelectorProps> = ({
           <h4 className="text-md font-medium text-white mb-3">Preview</h4>
           <div className="flex items-center space-x-4">
             <div className="w-20 h-20 rounded-full border-4 border-primary-500 bg-dark-surface/50 flex items-center justify-center overflow-hidden">
-              {selectedAvatar.startsWith('http') ? (
-                <img
-                  src={selectedAvatar}
-                  alt="Selected avatar"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-16 h-16">
-                  {(() => {
-                    const avatar = defaultAvatars.find(a => a.id === selectedAvatar);
-                    if (avatar) {
-                      const AvatarComponent = avatar.component;
-                      return <AvatarComponent />;
-                    }
-                    return null;
-                  })()}
-                </div>
-              )}
+              {getPreviewComponent()}
             </div>
             <div>
               <p className="text-white font-medium">Selected Avatar</p>
+              <p className="text-sm text-primary-300 font-medium">{getSelectedAvatarName()}</p>
               <p className="text-sm text-gray-400">This will be your new profile picture</p>
             </div>
           </div>
