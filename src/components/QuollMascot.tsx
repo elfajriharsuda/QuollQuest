@@ -100,10 +100,10 @@ const QuollMascot: React.FC<QuollMascotProps> = ({
         transition={animate ? { duration: 3, repeat: Infinity } : {}}
       />
       
-      {/* Tail */}
+      {/* Tail - NO ROTATION */}
       <motion.ellipse
         cx="24" cy="21" rx="4" ry="2" fill="#8B4513"
-        animate={animate ? { rotate: [0, 5, -5, 0] } : {}}
+        animate={animate ? { y: [0, -0.5, 0] } : {}}
         transition={animate ? { duration: 2.5, repeat: Infinity } : {}}
       />
       <circle cx="25" cy="20" r="0.5" fill="#654321" />
@@ -121,7 +121,7 @@ const QuollMascot: React.FC<QuollMascotProps> = ({
       <rect x="19.5" y="9" width="0.3" height="0.5" fill="#E74C3C" />
       <circle cx="19.65" cy="12.2" r="0.2" fill="#2C3E50" />
       
-      {/* Study sparkles (knowledge symbols) */}
+      {/* Study sparkles (knowledge symbols) - NO ROTATION */}
       {animate && (
         <>
           <motion.text
