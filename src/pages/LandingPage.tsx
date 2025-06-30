@@ -58,7 +58,40 @@ const LandingPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-fantasy-bg text-white overflow-hidden">
+    <div className="min-h-screen bg-fantasy-bg text-white overflow-hidden relative">
+      {/* Bolt Badge - Fixed Position */}
+      <motion.a
+        href="https://bolt.new"
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed top-4 right-4 z-50 group"
+      >
+        <div className="relative">
+          {/* Badge Image */}
+          <img
+            src="/badge bolt.png"
+            alt="Powered by Bolt"
+            className="w-16 h-16 md:w-20 md:h-20 transition-all duration-300 group-hover:drop-shadow-lg"
+          />
+          
+          {/* Glow Effect on Hover */}
+          <div className="absolute inset-0 bg-primary-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+          
+          {/* Tooltip */}
+          <div className="absolute bottom-full right-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+            <div className="bg-dark-card/90 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-lg border border-primary-800/30 whitespace-nowrap">
+              Built with Bolt.new
+              <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-dark-card/90"></div>
+            </div>
+          </div>
+        </div>
+      </motion.a>
+
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
