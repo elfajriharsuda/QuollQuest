@@ -10,6 +10,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<any>;
   signOut: () => Promise<void>;
   signInWithProvider: (provider: 'google' | 'facebook') => Promise<any>;
+  supabaseConfigured: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,11 +27,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [supabaseConfigured, setSupabaseConfigured] = useState(false);
   const mounted = useRef(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     mounted.current = true;
+
+    // Check if Supabase is properly configured
+    const checkSupabaseConfig = () => {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!url || !key) {
+        console.warn('Supabase environment variables not found. Please configure Supabase integration.');
+        setSupabaseConfigured(false);
+        setLoading(false);
+        return false;
+      }
+      
+      try {
+        new URL(url);
+        setSupabaseConfigured(true);
+        return true;
+      } catch (error) {
+        console.error('Invalid Supabase URL:', url);
+        setSupabaseConfigured(false);
+        setLoading(false);
+        return false;
+      }
+    };
+
+    if (!checkSupabaseConfig()) {
+      return;
+    }
 
     // Get initial session
     const getInitialSession = async () => {
@@ -39,6 +69,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (error) {
           console.error('Error getting session:', error);
+          if (error.message.includes('not configured')) {
+            setSupabaseConfigured(false);
+          }
         }
         
         if (mounted.current) {
@@ -49,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Error in getInitialSession:', error);
         if (mounted.current) {
+          setSupabaseConfigured(false);
           setLoading(false);
         }
       }
@@ -160,6 +194,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
+    if (!supabaseConfigured) {
+      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -177,7 +215,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         username,
         exp: 0,
         level: 1,
-        avatar_url: null,
+        avatar_url: 'quoll1',
+        login_streak: 0,
+        longest_streak: 0,
+        total_logins: 0,
       });
     }
 
@@ -185,10 +226,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!supabaseConfigured) {
+      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+    }
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
   const signOut = async () => {
+    if (!supabaseConfigured) {
+      return;
+    }
+    
     // Clear the refresh timeout
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
@@ -198,6 +246,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithProvider = async (provider: 'google' | 'facebook') => {
+    if (!supabaseConfigured) {
+      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+    }
+    
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -214,6 +266,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     signInWithProvider,
+    supabaseConfigured,
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Crown, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Crown, Eye, EyeOff, Mail, Lock, User, AlertTriangle, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const SignupPage: React.FC = () => {
@@ -16,7 +16,7 @@ const SignupPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { signUp, signInWithProvider } = useAuth();
+  const { signUp, signInWithProvider, supabaseConfigured } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,6 +28,12 @@ const SignupPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!supabaseConfigured) {
+      toast.error('Supabase is not configured. Please set up your Supabase integration first.');
+      return;
+    }
+    
     const { username, email, password, confirmPassword } = formData;
 
     if (!username || !email || !password || !confirmPassword) {
@@ -62,6 +68,11 @@ const SignupPage: React.FC = () => {
   };
 
   const handleProviderSignIn = async (provider: 'google' | 'facebook') => {
+    if (!supabaseConfigured) {
+      toast.error('Supabase is not configured. Please set up your Supabase integration first.');
+      return;
+    }
+    
     try {
       const { error } = await signInWithProvider(provider);
       if (error) {
@@ -115,12 +126,35 @@ const SignupPage: React.FC = () => {
           <p className="text-gray-400">Create your adventurer profile</p>
         </div>
 
+        {/* Supabase Configuration Warning */}
+        {!supabaseConfigured && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-6"
+          >
+            <div className="flex items-center space-x-3 mb-3">
+              <AlertTriangle className="w-6 h-6 text-orange-400" />
+              <h3 className="text-lg font-semibold text-orange-300">Setup Required</h3>
+            </div>
+            <p className="text-orange-200 text-sm mb-4">
+              Supabase integration is not configured. Please click the "Connect to Supabase" button in the top-right corner to set up your database connection.
+            </p>
+            <div className="flex items-center space-x-2 text-orange-300">
+              <Settings className="w-4 h-4" />
+              <span className="text-sm font-medium">Look for the integration button in the toolbar</span>
+            </div>
+          </motion.div>
+        )}
+
         {/* Form */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-8 border border-primary-800/30 shadow-2xl"
+          className={`bg-dark-card/60 backdrop-blur-lg rounded-2xl p-8 border border-primary-800/30 shadow-2xl ${
+            !supabaseConfigured ? 'opacity-60' : ''
+          }`}
         >
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Username Field */}
@@ -139,7 +173,8 @@ const SignupPage: React.FC = () => {
                   required
                   value={formData.username}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                  disabled={!supabaseConfigured}
+                  className="block w-full pl-10 pr-3 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Choose your username"
                 />
               </div>
@@ -162,7 +197,8 @@ const SignupPage: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                  disabled={!supabaseConfigured}
+                  className="block w-full pl-10 pr-3 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter your email"
                 />
               </div>
@@ -184,13 +220,15 @@ const SignupPage: React.FC = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-12 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                  disabled={!supabaseConfigured}
+                  className="block w-full pl-10 pr-12 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Create a password"
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={!supabaseConfigured}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-white transition-colors" />
@@ -217,13 +255,15 @@ const SignupPage: React.FC = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-12 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300"
+                  disabled={!supabaseConfigured}
+                  className="block w-full pl-10 pr-12 py-3 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Confirm your password"
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={!supabaseConfigured}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400 hover:text-white transition-colors" />
@@ -236,10 +276,10 @@ const SignupPage: React.FC = () => {
 
             {/* Submit Button */}
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={supabaseConfigured ? { scale: 1.02 } : {}}
+              whileTap={supabaseConfigured ? { scale: 0.98 } : {}}
               type="submit"
-              disabled={loading}
+              disabled={loading || !supabaseConfigured}
               className="w-full bg-gradient-to-r from-fantasy-purple to-primary-600 hover:from-fantasy-purple/90 hover:to-primary-700 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-bg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-fantasy-purple/25"
             >
               {loading ? (
@@ -268,10 +308,11 @@ const SignupPage: React.FC = () => {
           {/* Social Buttons */}
           <div className="mt-6 grid grid-cols-2 gap-3">
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={supabaseConfigured ? { scale: 1.02 } : {}}
+              whileTap={supabaseConfigured ? { scale: 0.98 } : {}}
               onClick={() => handleProviderSignIn('google')}
-              className="w-full inline-flex justify-center py-3 px-4 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-sm font-medium text-white hover:bg-dark-surface transition-all duration-300"
+              disabled={!supabaseConfigured}
+              className="w-full inline-flex justify-center py-3 px-4 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-sm font-medium text-white hover:bg-dark-surface transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -283,10 +324,11 @@ const SignupPage: React.FC = () => {
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={supabaseConfigured ? { scale: 1.02 } : {}}
+              whileTap={supabaseConfigured ? { scale: 0.98 } : {}}
               onClick={() => handleProviderSignIn('facebook')}
-              className="w-full inline-flex justify-center py-3 px-4 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-sm font-medium text-white hover:bg-dark-surface transition-all duration-300"
+              disabled={!supabaseConfigured}
+              className="w-full inline-flex justify-center py-3 px-4 border border-primary-800/30 rounded-xl bg-dark-surface/50 text-sm font-medium text-white hover:bg-dark-surface transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>

@@ -3,27 +3,65 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Only create the client if we have valid credentials
-if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'your_new_supabase_url_here' || supabaseAnonKey === 'your_new_supabase_anon_key_here') {
-  console.error('Supabase credentials are missing or invalid. Please update your .env file with valid Supabase URL and Anon Key.');
-  throw new Error('Supabase configuration is incomplete. Please check your environment variables.');
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    storage: window.localStorage,
-    storageKey: 'quollquest-auth-token',
-  },
-  global: {
-    headers: {
-      'X-Client-Info': 'quollquest-web',
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase environment variables are not set. Please configure Supabase integration.');
+  // Create a dummy client that will show helpful error messages
+  const dummyClient = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Supabase not configured') }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+      signUp: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      signOut: () => Promise.resolve({ error: null }),
     },
-  },
-});
+    from: () => ({
+      select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }) }),
+      insert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
+      delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
+    }),
+    rpc: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+    channel: () => ({
+      on: () => ({ subscribe: () => {} }),
+    }),
+    storage: {
+      from: () => ({
+        upload: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
+  };
+  
+  // Export the dummy client with proper typing
+  export const supabase = dummyClient as any;
+} else {
+  // Validate URL format
+  try {
+    new URL(supabaseUrl);
+  } catch (error) {
+    console.error('Invalid Supabase URL format:', supabaseUrl);
+    throw new Error('Invalid Supabase URL. Please check your VITE_SUPABASE_URL environment variable.');
+  }
+
+  // Create the real Supabase client
+  export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storage: window.localStorage,
+      storageKey: 'quollquest-auth-token',
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'quollquest-web',
+      },
+    },
+  });
+}
 
 export type Database = {
   public: {
