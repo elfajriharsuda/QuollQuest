@@ -49,6 +49,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
         return false;
       }
+
+      // Check for placeholder values
+      const isPlaceholderUrl = url === 'your_supabase_project_url_here' || 
+        url === 'https://placeholder.supabase.co' ||
+        url.includes('placeholder');
+
+      const isPlaceholderKey = key === 'your_supabase_anon_key_here' || 
+        key === 'placeholder-anon-key-here' ||
+        key.includes('placeholder');
+
+      if (isPlaceholderUrl || isPlaceholderKey) {
+        console.warn('Supabase environment variables contain placeholder values. Please update with actual credentials.');
+        setSupabaseConfigured(false);
+        setLoading(false);
+        return false;
+      }
       
       try {
         new URL(url);
