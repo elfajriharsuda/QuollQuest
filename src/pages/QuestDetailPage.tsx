@@ -1041,57 +1041,53 @@ const QuestDetailPage: React.FC = () => {
   const isLastQuestion = quizState.currentQuestion === questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-fantasy-bg text-white flex flex-col">
-      {/* Fixed Header */}
-      <div className="bg-dark-surface/80 backdrop-blur-lg border-b border-primary-800/30 p-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
+    <div className="h-screen bg-fantasy-bg text-white flex flex-col overflow-hidden">
+      {/* Fixed Header - Compact */}
+      <div className="bg-dark-surface/80 backdrop-blur-lg border-b border-primary-800/30 p-3 flex-shrink-0">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-between mb-2">
             <button
               onClick={() => navigate('/quests')}
-              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors"
+              className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Quests</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
             </button>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Target className="w-5 h-5 text-primary-400" />
+                <Target className="w-4 h-4 text-primary-400" />
                 <span className="text-sm text-gray-300">
-                  {quizState.currentQuestion + 1} of {questions.length}
+                  {quizState.currentQuestion + 1}/{questions.length}
                 </span>
               </div>
-              <div className={`px-3 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
-                <span className={`text-sm font-medium ${difficultyInfo.color}`}>
+              <div className={`px-2 py-1 rounded-lg ${difficultyInfo.bgColor}`}>
+                <span className={`text-xs font-medium ${difficultyInfo.color}`}>
                   {difficultyInfo.icon} {difficultyInfo.name}
                 </span>
               </div>
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold mb-2">
+          <h1 className="text-xl font-bold mb-2">
             {topic.name} Quest - Level {currentLevel}
           </h1>
           
-          <p className="text-gray-400 mb-4">
-            AI-generated questions tailored for {difficultyInfo.name.toLowerCase()} level
-          </p>
-          
           {/* Progress Bar */}
-          <div className="w-full bg-dark-surface rounded-full h-3 mb-4">
+          <div className="w-full bg-dark-surface rounded-full h-2">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5 }}
-              className="bg-gradient-to-r from-primary-500 to-fantasy-purple h-3 rounded-full"
+              className="bg-gradient-to-r from-primary-500 to-fantasy-purple h-2 rounded-full"
             />
           </div>
         </div>
       </div>
 
       {/* Main Content - Single Page Layout */}
-      <div className="flex-1 p-4">
-        <div className="max-w-6xl mx-auto h-full">
+      <div className="flex-1 p-4 overflow-hidden">
+        <div className="max-w-7xl mx-auto h-full flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               key={quizState.currentQuestion}
@@ -1102,7 +1098,7 @@ const QuestDetailPage: React.FC = () => {
               className="h-full flex flex-col"
             >
               {/* Timer and Question Header */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="flex items-center space-x-2">
                   <Brain className="w-5 h-5 text-fantasy-gold" />
                   <span className="text-sm text-fantasy-gold font-medium">AI Generated Question</span>
@@ -1124,14 +1120,14 @@ const QuestDetailPage: React.FC = () => {
               </div>
               
               {/* Question */}
-              <div className="mb-8">
-                <h2 className="text-3xl font-bold text-white mb-6 leading-relaxed whitespace-pre-line">
+              <div className="mb-6 flex-shrink-0">
+                <h2 className="text-2xl md:text-3xl font-bold text-white leading-relaxed">
                   {currentQuestion.question_text}
                 </h2>
               </div>
 
               {/* Answer Options - 2x2 Grid */}
-              <div className="grid grid-cols-2 gap-6 mb-8 flex-1">
+              <div className="grid grid-cols-2 gap-4 mb-6 flex-1">
                 {currentQuestion.options.map((option, index) => {
                   const isSelected = quizState.answers[quizState.currentQuestion] === index;
                   const isCorrect = index === currentQuestion.correct_answer;
@@ -1146,7 +1142,7 @@ const QuestDetailPage: React.FC = () => {
                       whileTap={!isDisabled ? { scale: 0.98 } : {}}
                       onClick={() => handleAnswerSelect(index)}
                       disabled={isDisabled}
-                      className={`h-full p-6 rounded-xl text-left transition-all duration-300 border-2 flex flex-col justify-center min-h-[120px] ${
+                      className={`h-full p-4 rounded-xl text-left transition-all duration-300 border-2 flex flex-col justify-center min-h-[100px] ${
                         showCorrectAnswer
                           ? 'bg-fantasy-emerald/20 border-fantasy-emerald text-white'
                           : showWrongAnswer
@@ -1158,8 +1154,8 @@ const QuestDetailPage: React.FC = () => {
                           : 'bg-dark-surface/50 border-primary-800/30 text-gray-300 hover:border-primary-600/50 hover:bg-dark-surface/70 cursor-pointer'
                       }`}
                     >
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 ${
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${
                           showCorrectAnswer
                             ? 'bg-fantasy-emerald text-white'
                             : showWrongAnswer
@@ -1172,12 +1168,12 @@ const QuestDetailPage: React.FC = () => {
                         }`}>
                           {String.fromCharCode(65 + index)}
                         </div>
-                        <span className="text-lg flex-1 leading-relaxed">{option}</span>
+                        <span className="text-sm md:text-base flex-1 leading-relaxed">{option}</span>
                         {showCorrectAnswer && (
-                          <CheckCircle className="w-6 h-6 text-fantasy-emerald flex-shrink-0" />
+                          <CheckCircle className="w-5 h-5 text-fantasy-emerald flex-shrink-0" />
                         )}
                         {showWrongAnswer && (
-                          <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                          <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
                         )}
                       </div>
                     </motion.button>
@@ -1186,25 +1182,25 @@ const QuestDetailPage: React.FC = () => {
               </div>
 
               {/* Feedback Section - Fixed at Bottom */}
-              <div className="min-h-[120px] flex items-center justify-center">
+              <div className="min-h-[100px] flex items-center justify-center flex-shrink-0">
                 {quizState.showFeedback ? (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center w-full"
                   >
-                    <div className={`mb-4 p-6 rounded-lg ${
+                    <div className={`mb-4 p-4 rounded-lg ${
                       quizState.isCorrect
                         ? 'bg-fantasy-emerald/20 border border-fantasy-emerald/30'
                         : 'bg-red-500/20 border border-red-500/30'
                     }`}>
-                      <div className="flex items-center justify-center space-x-2 mb-3">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
                         {quizState.isCorrect ? (
-                          <CheckCircle className="w-8 h-8 text-fantasy-emerald" />
+                          <CheckCircle className="w-6 h-6 text-fantasy-emerald" />
                         ) : (
-                          <XCircle className="w-8 h-8 text-red-500" />
+                          <XCircle className="w-6 h-6 text-red-500" />
                         )}
-                        <span className={`font-semibold text-xl ${
+                        <span className={`font-semibold text-lg ${
                           quizState.isCorrect ? 'text-fantasy-emerald' : 'text-red-500'
                         }`}>
                           {quizState.autoAnswered 
@@ -1216,7 +1212,7 @@ const QuestDetailPage: React.FC = () => {
                         </span>
                       </div>
                       {currentQuestion.explanation && (
-                        <div className="bg-dark-surface/30 p-4 rounded-lg">
+                        <div className="bg-dark-surface/30 p-3 rounded-lg">
                           <p className="text-gray-300 text-sm">
                             <strong className="text-white">💡 Explanation:</strong> {currentQuestion.explanation}
                           </p>
@@ -1235,7 +1231,7 @@ const QuestDetailPage: React.FC = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleNextQuestion}
-                        className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 mx-auto"
+                        className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 mx-auto"
                       >
                         <Trophy className="w-5 h-5" />
                         <span>View Results</span>
