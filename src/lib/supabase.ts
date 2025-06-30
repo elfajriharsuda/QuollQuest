@@ -9,10 +9,23 @@ console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing');
 
 let supabase: any;
 
+// Check for placeholder values or missing environment variables
+const isPlaceholderUrl = !supabaseUrl || 
+  supabaseUrl === 'your_supabase_project_url_here' || 
+  supabaseUrl === 'https://placeholder.supabase.co' ||
+  supabaseUrl.includes('placeholder');
+
+const isPlaceholderKey = !supabaseAnonKey || 
+  supabaseAnonKey === 'your_supabase_anon_key_here' || 
+  supabaseAnonKey === 'placeholder-anon-key-here' ||
+  supabaseAnonKey.includes('placeholder');
+
 // Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables are not set. Please configure Supabase integration.');
+if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
+  console.warn('⚠️ Supabase environment variables are not properly configured.');
+  console.warn('Please update your .env file with your actual Supabase credentials.');
   console.warn('Expected variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY');
+  console.warn('Get these from: https://supabase.com/dashboard > Settings > API');
   
   // Create a dummy client that will show helpful error messages
   const dummyClient = {
@@ -50,13 +63,51 @@ if (!supabaseUrl || !supabaseAnonKey) {
   
   supabase = dummyClient;
 } else {
-  // Validate URL format
+  // Validate URL format only if it's not a placeholder
   try {
     new URL(supabaseUrl);
     console.log('✅ Supabase URL is valid');
   } catch (error) {
     console.error('❌ Invalid Supabase URL format:', supabaseUrl);
-    throw new Error('Invalid Supabase URL. Please check your VITE_SUPABASE_URL environment variable.');
+    console.error('Please check your VITE_SUPABASE_URL environment variable.');
+    console.error('It should look like: https://your-project-id.supabase.co');
+    
+    // Use dummy client instead of throwing error
+    const dummyClient = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Invalid Supabase URL') }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signUp: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+        signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+        signOut: () => Promise.resolve({ error: null }),
+      },
+      from: () => ({
+        select: () => ({ 
+          eq: () => ({ 
+            single: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+            order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Invalid Supabase URL') }) })
+          }),
+          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Invalid Supabase URL') }) })
+        }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }),
+      }),
+      rpc: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+      channel: () => ({
+        on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+      }),
+      storage: {
+        from: () => ({
+          upload: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+          getPublicUrl: () => ({ data: { publicUrl: '' } }),
+        }),
+      },
+    };
+    
+    supabase = dummyClient;
+    return;
   }
 
   // Create the real Supabase client
