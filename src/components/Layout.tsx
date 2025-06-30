@@ -8,9 +8,9 @@ import {
   Users, 
   User, 
   LogOut, 
-  Crown,
   Trophy
 } from 'lucide-react';
+import QuollMascot from './QuollMascot';
 import toast from 'react-hot-toast';
 
 interface LayoutProps {
@@ -54,9 +54,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link to="/dashboard" className="flex items-center space-x-2">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-8 h-8 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-lg flex items-center justify-center"
+                className="w-10 h-10 bg-gradient-to-r from-primary-500 to-fantasy-purple rounded-lg flex items-center justify-center p-1"
               >
-                <Crown className="w-5 h-5 text-white" />
+                <QuollMascot animate={true} size="lg" className="text-white" />
               </motion.div>
               <span className="text-xl font-bold bg-gradient-to-r from-primary-400 to-fantasy-purple bg-clip-text text-transparent">
                 QuollQuest
