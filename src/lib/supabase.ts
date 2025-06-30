@@ -3,6 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn('Supabase URL and Anon Key are required. Please check your environment variables.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -29,6 +33,10 @@ export type Database = {
           avatar_url: string | null;
           exp: number;
           level: number;
+          login_streak: number;
+          longest_streak: number;
+          total_logins: number;
+          last_login_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -94,6 +102,34 @@ export type Database = {
         };
         Insert: Omit<Database['public']['Tables']['quoll_shouts']['Row'], 'id' | 'created_at'>;
         Update: Partial<Database['public']['Tables']['quoll_shouts']['Insert']>;
+      };
+      user_login_history: {
+        Row: {
+          id: string;
+          user_id: string;
+          login_date: string;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['user_login_history']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['user_login_history']['Insert']>;
+      };
+      leaderboard_cache: {
+        Row: {
+          id: string;
+          user_id: string;
+          username: string;
+          avatar_url: string | null;
+          level: number;
+          exp: number;
+          login_streak: number;
+          completed_quests: number;
+          total_score: number;
+          rank_position: number;
+          category: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['leaderboard_cache']['Row'], 'id' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['leaderboard_cache']['Insert']>;
       };
     };
   };
