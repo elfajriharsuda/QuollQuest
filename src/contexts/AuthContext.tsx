@@ -39,6 +39,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const url = import.meta.env.VITE_SUPABASE_URL;
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
+      console.log('Checking Supabase configuration...');
+      console.log('URL present:', !!url);
+      console.log('Key present:', !!key);
+      
       if (!url || !key) {
         console.warn('Supabase environment variables not found. Please configure Supabase integration.');
         setSupabaseConfigured(false);
@@ -49,9 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         new URL(url);
         setSupabaseConfigured(true);
+        console.log('✅ Supabase configuration is valid');
         return true;
       } catch (error) {
-        console.error('Invalid Supabase URL:', url);
+        console.error('❌ Invalid Supabase URL:', url);
         setSupabaseConfigured(false);
         setLoading(false);
         return false;
@@ -65,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('🔍 Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -72,6 +78,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (error.message.includes('not configured')) {
             setSupabaseConfigured(false);
           }
+        } else {
+          console.log('Session found:', !!session);
         }
         
         if (mounted.current) {
@@ -93,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        console.log('🔄 Auth state changed:', event, session?.user?.id);
         
         if (mounted.current) {
           setSession(session);
@@ -198,6 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
     }
 
+    console.log('🔐 Signing up user:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -209,6 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (data.user && !error) {
+      console.log('👤 Creating user profile...');
       // Create user profile
       await supabase.from('users').insert({
         id: data.user.id,
@@ -229,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
     }
+    
+    console.log('🔐 Signing in user:', email);
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
@@ -237,6 +249,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    console.log('👋 Signing out user...');
     // Clear the refresh timeout
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
@@ -250,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
     }
     
+    console.log('🔐 Signing in with provider:', provider);
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {

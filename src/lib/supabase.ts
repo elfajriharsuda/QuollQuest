@@ -3,11 +3,17 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Check if environment variables are properly loaded
+console.log('Supabase URL:', supabaseUrl ? 'Present' : 'Missing');
+console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing');
+
 let supabase: any;
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase environment variables are not set. Please configure Supabase integration.');
+  console.warn('Expected variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY');
+  
   // Create a dummy client that will show helpful error messages
   const dummyClient = {
     auth: {
@@ -19,14 +25,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
       signOut: () => Promise.resolve({ error: null }),
     },
     from: () => ({
-      select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }) }),
-      insert: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      select: () => ({ 
+        eq: () => ({ 
+          single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Supabase not configured') }) })
+        }),
+        order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Supabase not configured') }) })
+      }),
+      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }) }),
       update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
       delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
     }),
     rpc: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
     channel: () => ({
-      on: () => ({ subscribe: () => {} }),
+      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
     }),
     storage: {
       from: () => ({
@@ -42,12 +54,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // Validate URL format
   try {
     new URL(supabaseUrl);
+    console.log('✅ Supabase URL is valid');
   } catch (error) {
-    console.error('Invalid Supabase URL format:', supabaseUrl);
+    console.error('❌ Invalid Supabase URL format:', supabaseUrl);
     throw new Error('Invalid Supabase URL. Please check your VITE_SUPABASE_URL environment variable.');
   }
 
   // Create the real Supabase client
+  console.log('🚀 Initializing Supabase client...');
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
@@ -63,6 +77,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
       },
     },
   });
+  
+  console.log('✅ Supabase client initialized successfully');
 }
 
 export { supabase };
