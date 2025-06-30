@@ -1041,10 +1041,10 @@ const QuestDetailPage: React.FC = () => {
   const isLastQuestion = quizState.currentQuestion === questions.length - 1;
 
   return (
-    <div className="min-h-screen bg-fantasy-bg text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-fantasy-bg text-white flex flex-col">
+      {/* Fixed Header */}
+      <div className="bg-dark-surface/80 backdrop-blur-lg border-b border-primary-800/30 p-4">
+        <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate('/quests')}
@@ -1069,7 +1069,7 @@ const QuestDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">
+          <h1 className="text-2xl font-bold mb-2">
             {topic.name} Quest - Level {currentLevel}
           </h1>
           
@@ -1087,163 +1087,172 @@ const QuestDetailPage: React.FC = () => {
             />
           </div>
         </div>
+      </div>
 
-        {/* Question Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={quizState.currentQuestion}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-            className="bg-dark-card/80 backdrop-blur-lg rounded-2xl p-8 border border-primary-800/30"
-          >
-            {/* Timer */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-2">
-                <Brain className="w-5 h-5 text-fantasy-gold" />
-                <span className="text-sm text-fantasy-gold font-medium">AI Generated Question</span>
+      {/* Main Content - Single Page Layout */}
+      <div className="flex-1 p-4">
+        <div className="max-w-6xl mx-auto h-full">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={quizState.currentQuestion}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+              className="h-full flex flex-col"
+            >
+              {/* Timer and Question Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2">
+                  <Brain className="w-5 h-5 text-fantasy-gold" />
+                  <span className="text-sm text-fantasy-gold font-medium">AI Generated Question</span>
+                </div>
+                
+                <motion.div
+                  animate={quizState.timeLeft <= 5 ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.5, repeat: quizState.timeLeft <= 5 ? Infinity : 0 }}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${getTimerBgColor()}`}
+                >
+                  <Timer className={`w-5 h-5 ${getTimerColor()}`} />
+                  <span className={`text-lg font-bold ${getTimerColor()}`}>
+                    {quizState.timeLeft}s
+                  </span>
+                  {quizState.timeLeft <= 5 && (
+                    <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse" />
+                  )}
+                </motion.div>
               </div>
               
-              <motion.div
-                animate={quizState.timeLeft <= 5 ? { scale: [1, 1.1, 1] } : {}}
-                transition={{ duration: 0.5, repeat: quizState.timeLeft <= 5 ? Infinity : 0 }}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${getTimerBgColor()}`}
-              >
-                <Timer className={`w-4 h-4 ${getTimerColor()}`} />
-                <span className={`text-sm font-bold ${getTimerColor()}`}>
-                  {quizState.timeLeft}s
-                </span>
-                {quizState.timeLeft <= 5 && (
-                  <AlertTriangle className="w-4 h-4 text-red-400 animate-pulse" />
-                )}
-              </motion.div>
-            </div>
-            
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-6 leading-relaxed whitespace-pre-line">
-                {currentQuestion.question_text}
-              </h2>
-            </div>
+              {/* Question */}
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-white mb-6 leading-relaxed whitespace-pre-line">
+                  {currentQuestion.question_text}
+                </h2>
+              </div>
 
-            {/* Answer Options */}
-            <div className="space-y-4 mb-8">
-              {currentQuestion.options.map((option, index) => {
-                const isSelected = quizState.answers[quizState.currentQuestion] === index;
-                const isCorrect = index === currentQuestion.correct_answer;
-                const showCorrectAnswer = quizState.showFeedback && isCorrect;
-                const showWrongAnswer = quizState.showFeedback && isSelected && !isCorrect;
-                const isDisabled = quizState.showFeedback || !quizState.isTimerActive;
-                
-                return (
-                  <motion.button
-                    key={index}
-                    whileHover={!isDisabled ? { scale: 1.02, x: 10 } : {}}
-                    whileTap={!isDisabled ? { scale: 0.98 } : {}}
-                    onClick={() => handleAnswerSelect(index)}
-                    disabled={isDisabled}
-                    className={`w-full p-6 rounded-xl text-left transition-all duration-300 border-2 ${
-                      showCorrectAnswer
-                        ? 'bg-fantasy-emerald/20 border-fantasy-emerald text-white'
-                        : showWrongAnswer
-                        ? 'bg-red-500/20 border-red-500 text-white'
-                        : isSelected
-                        ? 'bg-primary-600/30 border-primary-500 text-white'
-                        : isDisabled
-                        ? 'bg-dark-surface/30 border-gray-600/30 text-gray-500 cursor-not-allowed'
-                        : 'bg-dark-surface/50 border-primary-800/30 text-gray-300 hover:border-primary-600/50 hover:bg-dark-surface/70 cursor-pointer'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+              {/* Answer Options - 2x2 Grid */}
+              <div className="grid grid-cols-2 gap-6 mb-8 flex-1">
+                {currentQuestion.options.map((option, index) => {
+                  const isSelected = quizState.answers[quizState.currentQuestion] === index;
+                  const isCorrect = index === currentQuestion.correct_answer;
+                  const showCorrectAnswer = quizState.showFeedback && isCorrect;
+                  const showWrongAnswer = quizState.showFeedback && isSelected && !isCorrect;
+                  const isDisabled = quizState.showFeedback || !quizState.isTimerActive;
+                  
+                  return (
+                    <motion.button
+                      key={index}
+                      whileHover={!isDisabled ? { scale: 1.02, y: -2 } : {}}
+                      whileTap={!isDisabled ? { scale: 0.98 } : {}}
+                      onClick={() => handleAnswerSelect(index)}
+                      disabled={isDisabled}
+                      className={`h-full p-6 rounded-xl text-left transition-all duration-300 border-2 flex flex-col justify-center min-h-[120px] ${
                         showCorrectAnswer
-                          ? 'bg-fantasy-emerald text-white'
+                          ? 'bg-fantasy-emerald/20 border-fantasy-emerald text-white'
                           : showWrongAnswer
-                          ? 'bg-red-500 text-white'
+                          ? 'bg-red-500/20 border-red-500 text-white'
                           : isSelected
-                          ? 'bg-primary-500 text-white'
+                          ? 'bg-primary-600/30 border-primary-500 text-white'
                           : isDisabled
-                          ? 'bg-gray-600 text-gray-400'
-                          : 'bg-gray-600 text-gray-300'
-                      }`}>
-                        {String.fromCharCode(65 + index)}
+                          ? 'bg-dark-surface/30 border-gray-600/30 text-gray-500 cursor-not-allowed'
+                          : 'bg-dark-surface/50 border-primary-800/30 text-gray-300 hover:border-primary-600/50 hover:bg-dark-surface/70 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 ${
+                          showCorrectAnswer
+                            ? 'bg-fantasy-emerald text-white'
+                            : showWrongAnswer
+                            ? 'bg-red-500 text-white'
+                            : isSelected
+                            ? 'bg-primary-500 text-white'
+                            : isDisabled
+                            ? 'bg-gray-600 text-gray-400'
+                            : 'bg-gray-600 text-gray-300'
+                        }`}>
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <span className="text-lg flex-1 leading-relaxed">{option}</span>
+                        {showCorrectAnswer && (
+                          <CheckCircle className="w-6 h-6 text-fantasy-emerald flex-shrink-0" />
+                        )}
+                        {showWrongAnswer && (
+                          <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
+                        )}
                       </div>
-                      <span className="text-lg flex-1">{option}</span>
-                      {showCorrectAnswer && (
-                        <CheckCircle className="w-6 h-6 text-fantasy-emerald" />
-                      )}
-                      {showWrongAnswer && (
-                        <XCircle className="w-6 h-6 text-red-500" />
-                      )}
-                    </div>
-                  </motion.button>
-                );
-              })}
-            </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
 
-            {/* Feedback */}
-            {quizState.showFeedback && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center"
-              >
-                <div className={`mb-4 p-4 rounded-lg ${
-                  quizState.isCorrect
-                    ? 'bg-fantasy-emerald/20 border border-fantasy-emerald/30'
-                    : 'bg-red-500/20 border border-red-500/30'
-                }`}>
-                  <div className="flex items-center justify-center space-x-2 mb-2">
-                    {quizState.isCorrect ? (
-                      <CheckCircle className="w-6 h-6 text-fantasy-emerald" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-red-500" />
-                    )}
-                    <span className={`font-semibold text-lg ${
-                      quizState.isCorrect ? 'text-fantasy-emerald' : 'text-red-500'
-                    }`}>
-                      {quizState.autoAnswered 
-                        ? '⏰ Time\'s Up!' 
-                        : quizState.isCorrect 
-                        ? '✅ Correct!' 
-                        : '❌ Incorrect'
-                      }
-                    </span>
-                  </div>
-                  {currentQuestion.explanation && (
-                    <div className="bg-dark-surface/30 p-3 rounded-lg">
-                      <p className="text-gray-300 text-sm">
-                        <strong className="text-white">💡 Explanation:</strong> {currentQuestion.explanation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Auto-advance message - only show for non-final questions */}
-                {!isLastQuestion && (
-                  <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
-                    <Clock className="w-4 h-4" />
-                    <span>Auto-advancing in 5 seconds...</span>
-                  </div>
-                )}
-
-                {/* Manual next button for final question */}
-                {isLastQuestion && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleNextQuestion}
-                    className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 mx-auto mt-4"
+              {/* Feedback Section - Fixed at Bottom */}
+              <div className="min-h-[120px] flex items-center justify-center">
+                {quizState.showFeedback ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center w-full"
                   >
-                    <Trophy className="w-5 h-5" />
-                    <span>View Results</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </motion.button>
+                    <div className={`mb-4 p-6 rounded-lg ${
+                      quizState.isCorrect
+                        ? 'bg-fantasy-emerald/20 border border-fantasy-emerald/30'
+                        : 'bg-red-500/20 border border-red-500/30'
+                    }`}>
+                      <div className="flex items-center justify-center space-x-2 mb-3">
+                        {quizState.isCorrect ? (
+                          <CheckCircle className="w-8 h-8 text-fantasy-emerald" />
+                        ) : (
+                          <XCircle className="w-8 h-8 text-red-500" />
+                        )}
+                        <span className={`font-semibold text-xl ${
+                          quizState.isCorrect ? 'text-fantasy-emerald' : 'text-red-500'
+                        }`}>
+                          {quizState.autoAnswered 
+                            ? '⏰ Time\'s Up!' 
+                            : quizState.isCorrect 
+                            ? '✅ Correct!' 
+                            : '❌ Incorrect'
+                          }
+                        </span>
+                      </div>
+                      {currentQuestion.explanation && (
+                        <div className="bg-dark-surface/30 p-4 rounded-lg">
+                          <p className="text-gray-300 text-sm">
+                            <strong className="text-white">💡 Explanation:</strong> {currentQuestion.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Auto-advance message - only show for non-final questions */}
+                    {!isLastQuestion ? (
+                      <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
+                        <Clock className="w-4 h-4" />
+                        <span>Auto-advancing in 5 seconds...</span>
+                      </div>
+                    ) : (
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleNextQuestion}
+                        className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center space-x-2 mx-auto"
+                      >
+                        <Trophy className="w-5 h-5" />
+                        <span>View Results</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </motion.button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <div className="text-center text-gray-400">
+                    <p className="text-lg">Choose your answer above</p>
+                    <p className="text-sm">Time remaining: {quizState.timeLeft} seconds</p>
+                  </div>
                 )}
-              </motion.div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
