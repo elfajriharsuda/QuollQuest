@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const checkSupabaseConnection = async () => {
-    console.log('🔍 Memeriksa koneksi Supabase...');
+    console.log('🔍 Checking Supabase connection...');
     setConnectionStatus('connecting');
 
     try {
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (!url || !key) {
-        console.warn('❌ Environment variables tidak ditemukan');
+        console.warn('❌ Environment variables not found');
         setSupabaseConfigured(false);
         setConnectionStatus('disconnected');
         setLoading(false);
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         key.length < 50;
 
       if (isPlaceholderUrl || isPlaceholderKey) {
-        console.warn('❌ Environment variables menggunakan nilai placeholder');
+        console.warn('❌ Environment variables using placeholder values');
         setSupabaseConfigured(false);
         setConnectionStatus('disconnected');
         setLoading(false);
@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         new URL(url);
       } catch (error) {
-        console.error('❌ Format URL Supabase tidak valid:', url);
+        console.error('❌ Invalid Supabase URL format:', url);
         setSupabaseConfigured(false);
         setConnectionStatus('error');
         setLoading(false);
@@ -106,11 +106,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Test actual connection
-      console.log('🔌 Menguji koneksi ke Supabase...');
+      console.log('🔌 Testing connection to Supabase...');
       const { data, error } = await supabase.auth.getSession();
       
       if (error && error.message.includes('not configured')) {
-        console.error('❌ Supabase tidak dikonfigurasi dengan benar:', error);
+        console.error('❌ Supabase not configured properly:', error);
         setSupabaseConfigured(false);
         setConnectionStatus('error');
         setLoading(false);
@@ -118,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Connection successful
-      console.log('✅ Koneksi Supabase berhasil!');
+      console.log('✅ Supabase connection successful!');
       setSupabaseConfigured(true);
       setConnectionStatus('connected');
       
@@ -135,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       startConnectionMonitoring();
 
     } catch (error) {
-      console.error('❌ Error saat memeriksa koneksi Supabase:', error);
+      console.error('❌ Error checking Supabase connection:', error);
       if (mounted.current) {
         setSupabaseConfigured(false);
         setConnectionStatus('error');
@@ -145,11 +145,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const setupAuthListener = () => {
-    console.log('👂 Menyiapkan auth state listener...');
+    console.log('👂 Setting up auth state listener...');
     
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state berubah:', event, session?.user?.id);
+        console.log('🔄 Auth state changed:', event, session?.user?.id);
         
         if (mounted.current) {
           setSession(session);
@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
             break;
           case 'TOKEN_REFRESHED':
-            console.log('🔄 Token berhasil di-refresh');
+            console.log('🔄 Token refreshed successfully');
             break;
           case 'SIGNED_IN':
             console.log('👋 User signed in');
@@ -189,15 +189,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const { error } = await supabase.auth.getSession();
         if (error && mounted.current) {
-          console.warn('⚠️ Koneksi Supabase bermasalah:', error.message);
+          console.warn('⚠️ Supabase connection issue:', error.message);
           setConnectionStatus('error');
         } else if (mounted.current && connectionStatus !== 'connected') {
-          console.log('✅ Koneksi Supabase pulih');
+          console.log('✅ Supabase connection recovered');
           setConnectionStatus('connected');
         }
       } catch (error) {
         if (mounted.current) {
-          console.error('❌ Error monitoring koneksi:', error);
+          console.error('❌ Error monitoring connection:', error);
           setConnectionStatus('error');
         }
       }
@@ -205,7 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const reconnect = async () => {
-    console.log('🔄 Mencoba reconnect ke Supabase...');
+    console.log('🔄 Attempting to reconnect to Supabase...');
     setConnectionStatus('connecting');
     await checkSupabaseConnection();
   };
@@ -214,11 +214,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
+        error: new Error('🔌 Supabase not connected. Please setup credentials in .env file') 
       };
     }
 
-    console.log('📝 Mendaftarkan user baru:', email);
+    console.log('📝 Registering new user:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -230,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (data.user && !error) {
-      console.log('👤 Membuat profil user...');
+      console.log('👤 Creating user profile...');
       try {
         await supabase.from('users').insert({
           id: data.user.id,
@@ -242,9 +242,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           longest_streak: 0,
           total_logins: 0,
         });
-        console.log('✅ Profil user berhasil dibuat');
+        console.log('✅ User profile created successfully');
       } catch (profileError) {
-        console.error('❌ Error membuat profil user:', profileError);
+        console.error('❌ Error creating user profile:', profileError);
       }
     }
 
@@ -255,11 +255,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
+        error: new Error('🔌 Supabase not connected. Please setup credentials in .env file') 
       };
     }
     
-    console.log('🔐 Melakukan sign in:', email);
+    console.log('🔐 Signing in:', email);
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    console.log('👋 Melakukan sign out...');
+    console.log('👋 Signing out...');
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
     }
@@ -280,11 +280,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
+        error: new Error('🔌 Supabase not connected. Please setup credentials in .env file') 
       };
     }
     
-    console.log('🔐 Sign in dengan provider:', provider);
+    console.log('🔐 Sign in with provider:', provider);
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {

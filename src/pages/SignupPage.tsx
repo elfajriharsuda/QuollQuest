@@ -138,11 +138,11 @@ const SignupPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-orange-300">Setup Required</h3>
             </div>
             <p className="text-orange-200 text-sm mb-4">
-              Supabase integration is not configured. Please click the "Connect to Supabase" button in the top-right corner to set up your database connection.
+              Supabase integration is not configured. Please setup your Supabase credentials in the .env file to enable user registration.
             </p>
             <div className="flex items-center space-x-2 text-orange-300">
               <Settings className="w-4 h-4" />
-              <span className="text-sm font-medium">Look for the integration button in the toolbar</span>
+              <span className="text-sm font-medium">Check the setup instructions in the connection status above</span>
             </div>
           </motion.div>
         )}

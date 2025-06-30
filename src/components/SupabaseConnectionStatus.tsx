@@ -30,8 +30,8 @@ const SupabaseConnectionStatus: React.FC = () => {
           icon: Loader2,
           color: 'text-blue-400',
           bgColor: 'bg-blue-500/10 border-blue-500/30',
-          title: 'Menghubungkan ke Supabase...',
-          message: 'Sedang memeriksa koneksi database',
+          title: 'Connecting to Supabase...',
+          message: 'Checking database connection',
           showReconnect: false,
           animate: true
         };
@@ -40,8 +40,8 @@ const SupabaseConnectionStatus: React.FC = () => {
           icon: AlertTriangle,
           color: 'text-red-400',
           bgColor: 'bg-red-500/10 border-red-500/30',
-          title: 'Koneksi Supabase Bermasalah',
-          message: 'Terjadi kesalahan saat menghubungkan ke database',
+          title: 'Supabase Connection Error',
+          message: 'Error occurred while connecting to database',
           showReconnect: true,
           animate: false
         };
@@ -51,8 +51,8 @@ const SupabaseConnectionStatus: React.FC = () => {
           icon: WifiOff,
           color: 'text-orange-400',
           bgColor: 'bg-orange-500/10 border-orange-500/30',
-          title: 'Supabase Belum Terhubung',
-          message: 'Silakan setup kredensial Supabase untuk melanjutkan',
+          title: 'Supabase Not Connected',
+          message: 'Please setup Supabase credentials to continue',
           showReconnect: false,
           animate: false
         };
@@ -65,7 +65,7 @@ VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key-here`;
     
     navigator.clipboard.writeText(envTemplate);
-    toast.success('Template .env berhasil disalin!');
+    toast.success('Template .env copied successfully!');
   };
 
   const config = getStatusConfig();
@@ -101,25 +101,25 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here`;
               <div className="bg-dark-surface/50 rounded-lg p-4 mb-4">
                 <h4 className="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
                   <FileText className="w-4 h-4" />
-                  <span>Langkah Setup:</span>
+                  <span>Setup Steps:</span>
                 </h4>
                 
                 <ol className="text-xs text-gray-300 space-y-2">
                   <li className="flex items-start space-x-2">
                     <span className="bg-primary-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold mt-0.5">1</span>
-                    <span>Buat project di <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 underline">supabase.com</a></span>
+                    <span>Create a project at <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-primary-400 hover:text-primary-300 underline">supabase.com</a></span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="bg-primary-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold mt-0.5">2</span>
-                    <span>Pergi ke Settings → API di dashboard Supabase</span>
+                    <span>Go to Settings → API in Supabase dashboard</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="bg-primary-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold mt-0.5">3</span>
-                    <span>Salin Project URL dan anon/public key</span>
+                    <span>Copy Project URL and anon/public key</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="bg-primary-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold mt-0.5">4</span>
-                    <span>Update file .env dengan kredensial Anda</span>
+                    <span>Update .env file with your credentials</span>
                   </li>
                   <li className="flex items-start space-x-2">
                     <span className="bg-primary-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold mt-0.5">5</span>
@@ -137,7 +137,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here`;
                     className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-lg text-xs font-medium text-white transition-colors"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    <span>Coba Lagi</span>
+                    <span>Try Again</span>
                   </motion.button>
                 )}
                 
@@ -148,7 +148,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here`;
                   className="flex items-center space-x-1 bg-fantasy-emerald hover:bg-fantasy-emerald/80 px-3 py-2 rounded-lg text-xs font-medium text-white transition-colors"
                 >
                   <Copy className="w-3 h-3" />
-                  <span>Copy Template .env</span>
+                  <span>Copy .env Template</span>
                 </motion.button>
                 
                 <motion.button
@@ -158,7 +158,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key-here`;
                   className="flex items-center space-x-1 bg-gray-600 hover:bg-gray-700 px-3 py-2 rounded-lg text-xs font-medium text-white transition-colors"
                 >
                   <ExternalLink className="w-3 h-3" />
-                  <span>Buka Supabase</span>
+                  <span>Open Supabase</span>
                 </motion.button>
               </div>
             </div>

@@ -37,10 +37,10 @@ const isDevelopment = import.meta.env.DEV;
 const shouldShowSetupInstructions = isDevelopment && (isPlaceholderUrl || isPlaceholderKey);
 
 if (shouldShowSetupInstructions) {
-  console.warn('⚠️ Supabase belum dikonfigurasi dengan benar.');
-  console.warn('🔧 Untuk mengaktifkan koneksi:');
-  console.warn('1. Buat project di https://supabase.com');
-  console.warn('2. Salin URL dan anon key ke file .env');
+  console.warn('⚠️ Supabase is not configured properly.');
+  console.warn('🔧 To enable connection:');
+  console.warn('1. Create a project at https://supabase.com');
+  console.warn('2. Copy URL and anon key to .env file');
   console.warn('3. Restart development server');
   
   // Create enhanced dummy client with better error messages
@@ -48,7 +48,7 @@ if (shouldShowSetupInstructions) {
     auth: {
       getSession: () => Promise.resolve({ 
         data: { session: null }, 
-        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial Supabase di file .env') 
+        error: new Error('🔌 Supabase not connected. Please setup Supabase credentials in .env file') 
       }),
       onAuthStateChange: () => ({ 
         data: { 
@@ -59,15 +59,15 @@ if (shouldShowSetupInstructions) {
       }),
       signUp: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
+        error: new Error('🔌 Please setup Supabase first in .env file') 
       }),
       signInWithPassword: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
+        error: new Error('🔌 Please setup Supabase first in .env file') 
       }),
       signInWithOAuth: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
+        error: new Error('🔌 Please setup Supabase first in .env file') 
       }),
       signOut: () => Promise.resolve({ error: null }),
     },
@@ -76,26 +76,26 @@ if (shouldShowSetupInstructions) {
         eq: () => ({ 
           single: () => Promise.resolve({ 
             data: null, 
-            error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+            error: new Error(`🔌 Cannot access table '${table}'. Supabase not connected.`) 
           }),
           order: () => ({ 
             limit: () => Promise.resolve({ 
               data: [], 
-              error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+              error: new Error(`🔌 Cannot access table '${table}'. Supabase not connected.`) 
             }) 
           })
         }),
         order: () => ({ 
           limit: () => Promise.resolve({ 
             data: [], 
-            error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+            error: new Error(`🔌 Cannot access table '${table}'. Supabase not connected.`) 
           }) 
         }),
         or: () => ({
           order: () => ({ 
             limit: () => Promise.resolve({ 
               data: [], 
-              error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+              error: new Error(`🔌 Cannot access table '${table}'. Supabase not connected.`) 
             }) 
           })
         })
@@ -104,26 +104,26 @@ if (shouldShowSetupInstructions) {
         select: () => ({ 
           single: () => Promise.resolve({ 
             data: null, 
-            error: new Error(`🔌 Tidak dapat menyimpan ke tabel '${table}'. Supabase belum terhubung.`) 
+            error: new Error(`🔌 Cannot save to table '${table}'. Supabase not connected.`) 
           }) 
         }) 
       }),
       update: (data: any) => ({ 
         eq: () => Promise.resolve({ 
           data: null, 
-          error: new Error(`🔌 Tidak dapat mengupdate tabel '${table}'. Supabase belum terhubung.`) 
+          error: new Error(`🔌 Cannot update table '${table}'. Supabase not connected.`) 
         }) 
       }),
       delete: () => ({ 
         eq: () => Promise.resolve({ 
           data: null, 
-          error: new Error(`🔌 Tidak dapat menghapus dari tabel '${table}'. Supabase belum terhubung.`) 
+          error: new Error(`🔌 Cannot delete from table '${table}'. Supabase not connected.`) 
         }) 
       }),
     }),
     rpc: (functionName: string, params?: any) => Promise.resolve({ 
       data: null, 
-      error: new Error(`🔌 Tidak dapat memanggil function '${functionName}'. Supabase belum terhubung.`) 
+      error: new Error(`🔌 Cannot call function '${functionName}'. Supabase not connected.`) 
     }),
     channel: (name: string) => ({
       on: () => ({ 
@@ -136,7 +136,7 @@ if (shouldShowSetupInstructions) {
       from: (bucket: string) => ({
         upload: () => Promise.resolve({ 
           data: null, 
-          error: new Error(`🔌 Tidak dapat upload ke bucket '${bucket}'. Supabase belum terhubung.`) 
+          error: new Error(`🔌 Cannot upload to bucket '${bucket}'. Supabase not connected.`) 
         }),
         getPublicUrl: () => ({ data: { publicUrl: '' } }),
       }),
@@ -149,44 +149,44 @@ if (shouldShowSetupInstructions) {
   try {
     if (supabaseUrl) {
       new URL(supabaseUrl);
-      console.log('✅ Supabase URL format valid');
+      console.log('✅ Supabase URL format is valid');
     }
   } catch (error) {
-    console.error('❌ Format URL Supabase tidak valid:', supabaseUrl);
-    console.error('URL harus seperti: https://your-project-id.supabase.co');
+    console.error('❌ Invalid Supabase URL format:', supabaseUrl);
+    console.error('URL should be like: https://your-project-id.supabase.co');
     
     // Use dummy client for invalid URL
     const dummyClient = {
       auth: {
         getSession: () => Promise.resolve({ 
           data: { session: null }, 
-          error: new Error('❌ URL Supabase tidak valid. Periksa format URL Anda.') 
+          error: new Error('❌ Invalid Supabase URL. Please check your URL format.') 
         }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signUp: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
-        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
-        signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+        signUp: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
+        signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
         signOut: () => Promise.resolve({ error: null }),
       },
       from: () => ({
         select: () => ({ 
           eq: () => ({ 
-            single: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
-            order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ URL Supabase tidak valid') }) })
+            single: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
+            order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ Invalid Supabase URL') }) })
           }),
-          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ URL Supabase tidak valid') }) })
+          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ Invalid Supabase URL') }) })
         }),
-        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }) }),
-        update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }),
-        delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }) }),
       }),
-      rpc: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+      rpc: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
       channel: () => ({
         on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
       }),
       storage: {
         from: () => ({
-          upload: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+          upload: () => Promise.resolve({ data: null, error: new Error('❌ Invalid Supabase URL') }),
           getPublicUrl: () => ({ data: { publicUrl: '' } }),
         }),
       },
@@ -198,7 +198,7 @@ if (shouldShowSetupInstructions) {
   // Only create the real Supabase client if we haven't already assigned a dummy client
   if (!supabase && supabaseUrl && supabaseAnonKey) {
     try {
-      console.log('🚀 Menginisialisasi Supabase client...');
+      console.log('🚀 Initializing Supabase client...');
       supabase = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           autoRefreshToken: true,
@@ -215,21 +215,21 @@ if (shouldShowSetupInstructions) {
         },
       });
       
-      console.log('✅ Supabase client berhasil diinisialisasi');
+      console.log('✅ Supabase client initialized successfully');
       
       // Test connection
       supabase.auth.getSession().then(({ data, error }: any) => {
         if (error) {
-          console.warn('⚠️ Peringatan koneksi Supabase:', error.message);
+          console.warn('⚠️ Supabase connection warning:', error.message);
         } else {
-          console.log('🎉 Koneksi Supabase berhasil!');
+          console.log('🎉 Supabase connection successful!');
         }
       }).catch((err: any) => {
-        console.error('❌ Gagal menguji koneksi Supabase:', err);
+        console.error('❌ Failed to test Supabase connection:', err);
       });
       
     } catch (error) {
-      console.error('❌ Gagal membuat Supabase client:', error);
+      console.error('❌ Failed to create Supabase client:', error);
     }
   }
 }
