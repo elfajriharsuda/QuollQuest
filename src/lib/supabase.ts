@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+let supabase: any;
+
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase environment variables are not set. Please configure Supabase integration.');
@@ -34,8 +36,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     },
   };
   
-  // Export the dummy client with proper typing
-  export const supabase = dummyClient as any;
+  // Assign the dummy client
+  supabase = dummyClient;
 } else {
   // Validate URL format
   try {
@@ -46,7 +48,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   }
 
   // Create the real Supabase client
-  export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
@@ -62,6 +64,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
     },
   });
 }
+
+export { supabase };
 
 export type Database = {
   public: {
