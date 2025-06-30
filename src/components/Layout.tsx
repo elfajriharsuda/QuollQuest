@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { useSubscription } from '../contexts/SubscriptionContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
@@ -10,9 +9,7 @@ import {
   User, 
   LogOut, 
   Crown,
-  Trophy,
-  CreditCard,
-  Sparkles
+  Trophy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -22,7 +19,6 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, signOut } = useAuth();
-  const { isPremium } = useSubscription();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -91,25 +87,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
-              {/* Premium Status / Pricing Link */}
-              {isPremium ? (
-                <div className="flex items-center space-x-2 bg-fantasy-gold/20 px-3 py-2 rounded-lg">
-                  <Sparkles className="w-4 h-4 text-fantasy-gold" />
-                  <span className="text-sm font-medium text-fantasy-gold">Premium</span>
-                </div>
-              ) : (
-                <Link to="/pricing">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-fantasy-gold to-fantasy-emerald hover:from-fantasy-gold/90 hover:to-fantasy-emerald/90 text-black rounded-lg transition-all duration-300 font-medium"
-                  >
-                    <Crown className="w-4 h-4" />
-                    <span className="text-sm">Upgrade</span>
-                  </motion.button>
-                </Link>
-              )}
-
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -154,15 +131,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             );
           })}
-          
-          {/* Mobile Pricing Link */}
-          <Link
-            to="/pricing"
-            className="flex flex-col items-center p-2 rounded-lg transition-all duration-200 text-fantasy-gold"
-          >
-            <CreditCard className="w-5 h-5" />
-            <span className="text-xs mt-1">Premium</span>
-          </Link>
         </div>
       </motion.nav>
     </div>
