@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface AvatarDisplayProps {
@@ -6,14 +6,38 @@ interface AvatarDisplayProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   animate?: boolean;
+  userId?: string; // Add userId prop to track avatar updates
 }
 
 const AvatarDisplay: React.FC<AvatarDisplayProps> = ({ 
   avatarId, 
   size = 'md', 
   className = '',
-  animate = true 
+  animate = true,
+  userId
 }) => {
+  const [currentAvatarId, setCurrentAvatarId] = useState(avatarId);
+
+  // Listen for avatar updates
+  useEffect(() => {
+    const handleAvatarUpdate = (event: CustomEvent) => {
+      if (userId && event.detail.userId === userId) {
+        setCurrentAvatarId(event.detail.newAvatarUrl);
+      }
+    };
+
+    window.addEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('avatarUpdated', handleAvatarUpdate as EventListener);
+    };
+  }, [userId]);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setCurrentAvatarId(avatarId);
+  }, [avatarId]);
+
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-12 h-12',
@@ -22,10 +46,11 @@ const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
   };
 
   // If it's a URL (custom uploaded image), show the image
-  if (avatarId && avatarId.startsWith('http')) {
+  if (currentAvatarId && currentAvatarId.startsWith('http')) {
     return (
       <motion.img
-        src={avatarId}
+        key={currentAvatarId} // Force re-render when avatar changes
+        src={currentAvatarId}
         alt="Avatar"
         className={`${sizeClasses[size]} rounded-full object-cover border-2 border-primary-500 ${className}`}
         animate={animate ? { scale: [1, 1.05, 1] } : {}}
@@ -50,10 +75,11 @@ const AvatarDisplay: React.FC<AvatarDisplayProps> = ({
     dragon1: DragonAvatar1,
   };
 
-  const AvatarComponent = avatarComponents[avatarId || 'quoll1'] || QuollAvatar1;
+  const AvatarComponent = avatarComponents[currentAvatarId || 'quoll1'] || QuollAvatar1;
 
   return (
     <motion.div
+      key={currentAvatarId} // Force re-render when avatar changes
       className={`${sizeClasses[size]} rounded-full border-2 border-primary-500 overflow-hidden bg-dark-surface/50 flex items-center justify-center ${className}`}
       animate={animate ? { scale: [1, 1.05, 1] } : {}}
       transition={{ duration: 2, repeat: Infinity }}

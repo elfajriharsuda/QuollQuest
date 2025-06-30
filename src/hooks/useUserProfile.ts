@@ -187,7 +187,18 @@ export const useUserProfile = () => {
         .single();
 
       if (error) throw error;
+      
+      // Update local state immediately for instant UI feedback
       setProfile(data);
+      
+      // If avatar was updated, trigger a refresh of other components that might use the avatar
+      if (updates.avatar_url !== undefined) {
+        // Dispatch a custom event to notify other components about avatar change
+        window.dispatchEvent(new CustomEvent('avatarUpdated', { 
+          detail: { userId: user.id, newAvatarUrl: data.avatar_url } 
+        }));
+      }
+      
       return { success: true };
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -223,6 +234,15 @@ export const useUserProfile = () => {
     return `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop`;
   };
 
+  // Force refresh profile data
+  const refreshProfile = async () => {
+    await fetchUserProfile();
+  };
+
+  const refreshStats = async () => {
+    await fetchUserStats();
+  };
+
   return {
     profile,
     stats,
@@ -230,8 +250,8 @@ export const useUserProfile = () => {
     error,
     updateProfile,
     addExperience,
-    refreshProfile: fetchUserProfile,
-    refreshStats: fetchUserStats,
+    refreshProfile,
+    refreshStats,
     getAvatarUrl
   };
 };

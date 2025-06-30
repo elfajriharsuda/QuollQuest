@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../lib/supabase';
+import AvatarDisplay from '../components/AvatarDisplay';
 import { 
   Crown, 
   Trophy, 
@@ -24,6 +25,7 @@ interface RecentShout {
   users: {
     username: string;
     level: number;
+    avatar_url: string | null;
   };
 }
 
@@ -46,7 +48,8 @@ const Dashboard: React.FC = () => {
           created_at,
           users (
             username,
-            level
+            level,
+            avatar_url
           )
         `)
         .order('created_at', { ascending: false })
@@ -302,10 +305,11 @@ const Dashboard: React.FC = () => {
               {recentShouts.length > 0 ? (
                 recentShouts.map((shout, index) => (
                   <div key={shout.id} className="flex items-start space-x-3 p-3 bg-dark-surface/30 rounded-lg">
-                    <img
-                      src={`https://images.pexels.com/photos/${2379004 + index}/pexels-photo-${2379004 + index}.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop`}
-                      alt="User"
-                      className="w-8 h-8 rounded-full border border-primary-500"
+                    <AvatarDisplay
+                      avatarId={shout.users.avatar_url}
+                      size="sm"
+                      userId={shout.users.username} // Use username as fallback ID
+                      animate={false}
                     />
                     <div className="flex-1">
                       <p className="text-sm text-white">

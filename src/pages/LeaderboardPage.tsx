@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import AvatarDisplay from '../components/AvatarDisplay';
 import { 
   Trophy, 
   Crown, 
@@ -492,10 +493,11 @@ const LeaderboardPage: React.FC = () => {
                       </div>
 
                       {/* Avatar */}
-                      <img
-                        src={entry.avatar_url || `https://images.pexels.com/photos/${2379004 + (index % 10)}/pexels-photo-${2379004 + (index % 10)}.jpeg?auto=compress&cs=tinysrgb&w=80&h=80&fit=crop`}
-                        alt={entry.username}
-                        className="w-12 h-12 rounded-full border-2 border-primary-500 object-cover"
+                      <AvatarDisplay
+                        avatarId={entry.avatar_url}
+                        size="lg"
+                        userId={entry.user_id}
+                        animate={false}
                       />
 
                       {/* User Info */}

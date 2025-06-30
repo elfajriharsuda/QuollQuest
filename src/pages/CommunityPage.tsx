@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { supabase } from '../lib/supabase';
+import AvatarDisplay from '../components/AvatarDisplay';
 import { 
   Heart, 
   MessageCircle, 
@@ -249,10 +250,11 @@ const CommunityPage: React.FC = () => {
           className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30"
         >
           <div className="flex items-start space-x-4">
-            <img
-              src={profile?.avatar_url || `https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop`}
-              alt="Your avatar"
-              className="w-12 h-12 rounded-full border-2 border-primary-500"
+            <AvatarDisplay
+              avatarId={profile?.avatar_url}
+              size="md"
+              userId={user?.id}
+              animate={false}
             />
             <div className="flex-1">
               <textarea
@@ -311,10 +313,11 @@ const CommunityPage: React.FC = () => {
                   className="bg-dark-card/60 backdrop-blur-lg rounded-2xl p-6 border border-primary-800/30 hover:border-primary-600/50 transition-all duration-300"
                 >
                   <div className="flex items-start space-x-4">
-                    <img
-                      src={shout.users.avatar_url || `https://images.pexels.com/photos/${2379004 + (index % 10)}/pexels-photo-${2379004 + (index % 10)}.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop`}
-                      alt={shout.users.username}
-                      className="w-12 h-12 rounded-full border-2 border-primary-500"
+                    <AvatarDisplay
+                      avatarId={shout.users.avatar_url}
+                      size="md"
+                      userId={shout.user_id}
+                      animate={false}
                     />
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
