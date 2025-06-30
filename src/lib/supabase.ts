@@ -1,64 +1,144 @@
 import { createClient } from '@supabase/supabase-js';
 
+// Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if environment variables are properly loaded
-console.log('Supabase URL:', supabaseUrl ? 'Present' : 'Missing');
-console.log('Supabase Anon Key:', supabaseAnonKey ? 'Present' : 'Missing');
+// Enhanced logging for debugging
+console.log('🔍 Supabase Configuration Check:');
+console.log('URL present:', !!supabaseUrl);
+console.log('Key present:', !!supabaseAnonKey);
+console.log('URL value:', supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'Not found');
+console.log('Key value:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'Not found');
 
 let supabase: any;
 
-// Check for placeholder values or missing environment variables
+// Enhanced placeholder detection
 const isPlaceholderUrl = !supabaseUrl || 
   supabaseUrl === 'your-project-id.supabase.co' || 
   supabaseUrl === 'https://your-project-id.supabase.co' ||
   supabaseUrl === 'https://placeholder.supabase.co' ||
-  supabaseUrl.includes('your-project-id');
+  supabaseUrl.includes('your-project-id') ||
+  supabaseUrl.includes('placeholder') ||
+  supabaseUrl === 'undefined' ||
+  supabaseUrl === 'null';
 
 const isPlaceholderKey = !supabaseAnonKey || 
   supabaseAnonKey === 'your-anon-key-here' || 
   supabaseAnonKey === 'placeholder-anon-key-here' ||
-  supabaseAnonKey.includes('your-anon-key');
+  supabaseAnonKey.includes('your-anon-key') ||
+  supabaseAnonKey.includes('placeholder') ||
+  supabaseAnonKey === 'undefined' ||
+  supabaseAnonKey === 'null' ||
+  supabaseAnonKey.length < 50; // Supabase keys are typically much longer
 
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
-  console.warn('⚠️ Supabase environment variables are not properly configured.');
-  console.warn('Please follow these steps to set up Supabase manually:');
-  console.warn('1. Go to https://supabase.com and create a new project');
-  console.warn('2. Go to Settings > API in your Supabase dashboard');
-  console.warn('3. Copy your Project URL and anon/public key');
-  console.warn('4. Update the .env file with your actual credentials');
+// Check if we're in development and should show setup instructions
+const isDevelopment = import.meta.env.DEV;
+const shouldShowSetupInstructions = isDevelopment && (isPlaceholderUrl || isPlaceholderKey);
+
+if (shouldShowSetupInstructions) {
+  console.warn('⚠️ Supabase belum dikonfigurasi dengan benar.');
+  console.warn('🔧 Untuk mengaktifkan koneksi otomatis:');
+  console.warn('1. Klik tombol "Connect to Supabase" di pojok kanan atas');
+  console.warn('2. Atau setup manual: buat project di https://supabase.com');
+  console.warn('3. Salin URL dan anon key ke file .env');
+  console.warn('4. Restart development server');
   
-  // Create a dummy client that will show helpful error messages
+  // Create enhanced dummy client with better error messages
   const dummyClient = {
     auth: {
-      getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Supabase not configured') }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signUp: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-      signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-      signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      getSession: () => Promise.resolve({ 
+        data: { session: null }, 
+        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+      }),
+      onAuthStateChange: () => ({ 
+        data: { 
+          subscription: { 
+            unsubscribe: () => console.log('🔌 Dummy auth subscription unsubscribed') 
+          } 
+        } 
+      }),
+      signUp: () => Promise.resolve({ 
+        data: null, 
+        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+      }),
+      signInWithPassword: () => Promise.resolve({ 
+        data: null, 
+        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+      }),
+      signInWithOAuth: () => Promise.resolve({ 
+        data: null, 
+        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+      }),
       signOut: () => Promise.resolve({ error: null }),
     },
-    from: () => ({
-      select: () => ({ 
+    from: (table: string) => ({
+      select: (columns?: string) => ({ 
         eq: () => ({ 
-          single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Supabase not configured') }) })
+          single: () => Promise.resolve({ 
+            data: null, 
+            error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+          }),
+          order: () => ({ 
+            limit: () => Promise.resolve({ 
+              data: [], 
+              error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+            }) 
+          })
         }),
-        order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Supabase not configured') }) })
+        order: () => ({ 
+          limit: () => Promise.resolve({ 
+            data: [], 
+            error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+          }) 
+        }),
+        or: () => ({
+          order: () => ({ 
+            limit: () => Promise.resolve({ 
+              data: [], 
+              error: new Error(`🔌 Tidak dapat mengakses tabel '${table}'. Supabase belum terhubung.`) 
+            }) 
+          })
+        })
       }),
-      insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }) }),
-      update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
-      delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }) }),
+      insert: (data: any) => ({ 
+        select: () => ({ 
+          single: () => Promise.resolve({ 
+            data: null, 
+            error: new Error(`🔌 Tidak dapat menyimpan ke tabel '${table}'. Supabase belum terhubung.`) 
+          }) 
+        }) 
+      }),
+      update: (data: any) => ({ 
+        eq: () => Promise.resolve({ 
+          data: null, 
+          error: new Error(`🔌 Tidak dapat mengupdate tabel '${table}'. Supabase belum terhubung.`) 
+        }) 
+      }),
+      delete: () => ({ 
+        eq: () => Promise.resolve({ 
+          data: null, 
+          error: new Error(`🔌 Tidak dapat menghapus dari tabel '${table}'. Supabase belum terhubung.`) 
+        }) 
+      }),
     }),
-    rpc: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
-    channel: () => ({
-      on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
+    rpc: (functionName: string, params?: any) => Promise.resolve({ 
+      data: null, 
+      error: new Error(`🔌 Tidak dapat memanggil function '${functionName}'. Supabase belum terhubung.`) 
+    }),
+    channel: (name: string) => ({
+      on: () => ({ 
+        subscribe: () => ({ 
+          unsubscribe: () => console.log(`🔌 Dummy channel '${name}' unsubscribed`) 
+        }) 
+      }),
     }),
     storage: {
-      from: () => ({
-        upload: () => Promise.resolve({ data: null, error: new Error('Supabase not configured') }),
+      from: (bucket: string) => ({
+        upload: () => Promise.resolve({ 
+          data: null, 
+          error: new Error(`🔌 Tidak dapat upload ke bucket '${bucket}'. Supabase belum terhubung.`) 
+        }),
         getPublicUrl: () => ({ data: { publicUrl: '' } }),
       }),
     },
@@ -68,42 +148,46 @@ if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
 } else {
   // Validate URL format only if it's not a placeholder
   try {
-    new URL(supabaseUrl);
-    console.log('✅ Supabase URL is valid');
+    if (supabaseUrl) {
+      new URL(supabaseUrl);
+      console.log('✅ Supabase URL format valid');
+    }
   } catch (error) {
-    console.error('❌ Invalid Supabase URL format:', supabaseUrl);
-    console.error('Please check your VITE_SUPABASE_URL environment variable.');
-    console.error('It should look like: https://your-project-id.supabase.co');
+    console.error('❌ Format URL Supabase tidak valid:', supabaseUrl);
+    console.error('URL harus seperti: https://your-project-id.supabase.co');
     
-    // Use dummy client instead of throwing error
+    // Use dummy client for invalid URL
     const dummyClient = {
       auth: {
-        getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Invalid Supabase URL') }),
+        getSession: () => Promise.resolve({ 
+          data: { session: null }, 
+          error: new Error('❌ URL Supabase tidak valid. Periksa format URL Anda.') 
+        }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-        signUp: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
-        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
-        signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+        signUp: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+        signInWithOAuth: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
         signOut: () => Promise.resolve({ error: null }),
       },
       from: () => ({
         select: () => ({ 
           eq: () => ({ 
-            single: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
-            order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Invalid Supabase URL') }) })
+            single: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
+            order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ URL Supabase tidak valid') }) })
           }),
-          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('Invalid Supabase URL') }) })
+          order: () => ({ limit: () => Promise.resolve({ data: [], error: new Error('❌ URL Supabase tidak valid') }) })
         }),
-        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }) }),
-        update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }),
-        delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }) }),
+        insert: () => ({ select: () => ({ single: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }) }),
+        update: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }),
+        delete: () => ({ eq: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }) }),
       }),
-      rpc: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+      rpc: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
       channel: () => ({
         on: () => ({ subscribe: () => ({ unsubscribe: () => {} }) }),
       }),
       storage: {
         from: () => ({
-          upload: () => Promise.resolve({ data: null, error: new Error('Invalid Supabase URL') }),
+          upload: () => Promise.resolve({ data: null, error: new Error('❌ URL Supabase tidak valid') }),
           getPublicUrl: () => ({ data: { publicUrl: '' } }),
         }),
       },
@@ -113,27 +197,63 @@ if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
   }
 
   // Only create the real Supabase client if we haven't already assigned a dummy client
-  if (!supabase) {
-    // Create the real Supabase client
-    console.log('🚀 Initializing Supabase client...');
-    supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce',
-        storage: window.localStorage,
-        storageKey: 'quollquest-auth-token',
-      },
-      global: {
-        headers: {
-          'X-Client-Info': 'quollquest-web',
+  if (!supabase && supabaseUrl && supabaseAnonKey) {
+    try {
+      console.log('🚀 Menginisialisasi Supabase client...');
+      supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          flowType: 'pkce',
+          storage: window.localStorage,
+          storageKey: 'quollquest-auth-token',
         },
-      },
-    });
-    
-    console.log('✅ Supabase client initialized successfully');
+        global: {
+          headers: {
+            'X-Client-Info': 'quollquest-web',
+          },
+        },
+      });
+      
+      console.log('✅ Supabase client berhasil diinisialisasi');
+      
+      // Test connection
+      supabase.auth.getSession().then(({ data, error }: any) => {
+        if (error) {
+          console.warn('⚠️ Peringatan koneksi Supabase:', error.message);
+        } else {
+          console.log('🎉 Koneksi Supabase berhasil!');
+        }
+      }).catch((err: any) => {
+        console.error('❌ Gagal menguji koneksi Supabase:', err);
+      });
+      
+    } catch (error) {
+      console.error('❌ Gagal membuat Supabase client:', error);
+    }
   }
+}
+
+// Auto-detection for environment changes
+if (isDevelopment) {
+  // Watch for environment variable changes
+  const originalEnv = { ...import.meta.env };
+  
+  setInterval(() => {
+    const currentUrl = import.meta.env.VITE_SUPABASE_URL;
+    const currentKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (currentUrl !== originalEnv.VITE_SUPABASE_URL || 
+        currentKey !== originalEnv.VITE_SUPABASE_ANON_KEY) {
+      console.log('🔄 Perubahan environment variable terdeteksi, silakan refresh halaman');
+      
+      // Show notification to user
+      if (window.confirm('🔄 Konfigurasi Supabase telah berubah. Refresh halaman untuk menerapkan perubahan?')) {
+        window.location.reload();
+      }
+    }
+  }, 5000); // Check every 5 seconds
 }
 
 export { supabase };

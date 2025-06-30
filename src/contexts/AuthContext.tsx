@@ -11,6 +11,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithProvider: (provider: 'google' | 'facebook') => Promise<any>;
   supabaseConfigured: boolean;
+  connectionStatus: 'connected' | 'disconnected' | 'connecting' | 'error';
+  reconnect: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,96 +30,126 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [supabaseConfigured, setSupabaseConfigured] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error'>('connecting');
   const mounted = useRef(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const connectionCheckRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     mounted.current = true;
+    checkSupabaseConnection();
 
-    // Check if Supabase is properly configured
-    const checkSupabaseConfig = () => {
+    return () => {
+      mounted.current = false;
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      if (connectionCheckRef.current) {
+        clearInterval(connectionCheckRef.current);
+      }
+    };
+  }, []);
+
+  const checkSupabaseConnection = async () => {
+    console.log('🔍 Memeriksa koneksi Supabase...');
+    setConnectionStatus('connecting');
+
+    try {
+      // Check environment variables
       const url = import.meta.env.VITE_SUPABASE_URL;
       const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
-      console.log('Checking Supabase configuration...');
-      console.log('URL present:', !!url);
-      console.log('Key present:', !!key);
+      console.log('Environment check:', {
+        urlPresent: !!url,
+        keyPresent: !!key,
+        urlValid: url && !url.includes('placeholder') && !url.includes('your-project-id'),
+        keyValid: key && !key.includes('placeholder') && !key.includes('your-anon-key') && key.length > 50
+      });
       
       if (!url || !key) {
-        console.warn('Supabase environment variables not found. Please configure Supabase integration.');
+        console.warn('❌ Environment variables tidak ditemukan');
         setSupabaseConfigured(false);
+        setConnectionStatus('disconnected');
         setLoading(false);
-        return false;
+        return;
       }
 
       // Check for placeholder values
-      const isPlaceholderUrl = url === 'your_supabase_project_url_here' || 
-        url === 'https://placeholder.supabase.co' ||
-        url.includes('placeholder');
+      const isPlaceholderUrl = url.includes('placeholder') || 
+        url.includes('your-project-id') || 
+        url === 'undefined' || 
+        url === 'null';
 
-      const isPlaceholderKey = key === 'your_supabase_anon_key_here' || 
-        key === 'placeholder-anon-key-here' ||
-        key.includes('placeholder');
+      const isPlaceholderKey = key.includes('placeholder') || 
+        key.includes('your-anon-key') || 
+        key === 'undefined' || 
+        key === 'null' ||
+        key.length < 50;
 
       if (isPlaceholderUrl || isPlaceholderKey) {
-        console.warn('Supabase environment variables contain placeholder values. Please update with actual credentials.');
+        console.warn('❌ Environment variables menggunakan nilai placeholder');
         setSupabaseConfigured(false);
+        setConnectionStatus('disconnected');
         setLoading(false);
-        return false;
+        return;
       }
       
+      // Validate URL format
       try {
         new URL(url);
-        setSupabaseConfigured(true);
-        console.log('✅ Supabase configuration is valid');
-        return true;
       } catch (error) {
-        console.error('❌ Invalid Supabase URL:', url);
+        console.error('❌ Format URL Supabase tidak valid:', url);
         setSupabaseConfigured(false);
+        setConnectionStatus('error');
         setLoading(false);
-        return false;
+        return;
       }
-    };
 
-    if (!checkSupabaseConfig()) {
-      return;
+      // Test actual connection
+      console.log('🔌 Menguji koneksi ke Supabase...');
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error && error.message.includes('not configured')) {
+        console.error('❌ Supabase tidak dikonfigurasi dengan benar:', error);
+        setSupabaseConfigured(false);
+        setConnectionStatus('error');
+        setLoading(false);
+        return;
+      }
+      
+      // Connection successful
+      console.log('✅ Koneksi Supabase berhasil!');
+      setSupabaseConfigured(true);
+      setConnectionStatus('connected');
+      
+      if (mounted.current) {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        setLoading(false);
+      }
+
+      // Set up auth state listener
+      setupAuthListener();
+      
+      // Start periodic connection monitoring
+      startConnectionMonitoring();
+
+    } catch (error) {
+      console.error('❌ Error saat memeriksa koneksi Supabase:', error);
+      if (mounted.current) {
+        setSupabaseConfigured(false);
+        setConnectionStatus('error');
+        setLoading(false);
+      }
     }
+  };
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        console.log('🔍 Getting initial session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          if (error.message.includes('not configured')) {
-            setSupabaseConfigured(false);
-          }
-        } else {
-          console.log('Session found:', !!session);
-        }
-        
-        if (mounted.current) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Error in getInitialSession:', error);
-        if (mounted.current) {
-          setSupabaseConfigured(false);
-          setLoading(false);
-        }
-      }
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
+  const setupAuthListener = () => {
+    console.log('👂 Menyiapkan auth state listener...');
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state changed:', event, session?.user?.id);
+        console.log('🔄 Auth state berubah:', event, session?.user?.id);
         
         if (mounted.current) {
           setSession(session);
@@ -126,103 +158,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // Handle specific auth events
-        if (event === 'SIGNED_OUT') {
-          // Clear any cached data
-          if (mounted.current) {
-            setUser(null);
-            setSession(null);
-          }
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
-        } else if (event === 'SIGNED_IN') {
-          console.log('User signed in');
+        switch (event) {
+          case 'SIGNED_OUT':
+            console.log('👋 User signed out');
+            if (mounted.current) {
+              setUser(null);
+              setSession(null);
+            }
+            break;
+          case 'TOKEN_REFRESHED':
+            console.log('🔄 Token berhasil di-refresh');
+            break;
+          case 'SIGNED_IN':
+            console.log('👋 User signed in');
+            break;
+          case 'INITIAL_SESSION':
+            console.log('🎯 Initial session loaded');
+            break;
         }
       }
     );
 
-    // Periodic session refresh to prevent logout
-    const startPeriodicRefresh = () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-      
-      refreshTimeoutRef.current = setTimeout(async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (mounted.current && session) {
-            setSession(session);
-            setUser(session.user);
-          }
-          startPeriodicRefresh(); // Schedule next refresh
-        } catch (error) {
-          console.error('Error refreshing session:', error);
-        }
-      }, 30000); // Refresh every 30 seconds
-    };
+    // Store subscription for cleanup
+    return subscription;
+  };
 
-    startPeriodicRefresh();
-
-    // Handle page visibility changes to prevent logout on tab switch
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible') {
-        // When tab becomes visible again, refresh the session
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (mounted.current && session) {
-            setSession(session);
-            setUser(session.user);
-          }
-        } catch (error) {
-          console.error('Error refreshing session on visibility change:', error);
-        }
-      }
-    };
-
-    // Handle page focus to refresh session
-    const handleFocus = async () => {
+  const startConnectionMonitoring = () => {
+    // Monitor connection every 30 seconds
+    connectionCheckRef.current = setInterval(async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (mounted.current && session) {
-          setSession(session);
-          setUser(session.user);
+        const { error } = await supabase.auth.getSession();
+        if (error && mounted.current) {
+          console.warn('⚠️ Koneksi Supabase bermasalah:', error.message);
+          setConnectionStatus('error');
+        } else if (mounted.current && connectionStatus !== 'connected') {
+          console.log('✅ Koneksi Supabase pulih');
+          setConnectionStatus('connected');
         }
       } catch (error) {
-        console.error('Error refreshing session on focus:', error);
+        if (mounted.current) {
+          console.error('❌ Error monitoring koneksi:', error);
+          setConnectionStatus('error');
+        }
       }
-    };
+    }, 30000);
+  };
 
-    // Handle before unload to persist session
-    const handleBeforeUnload = () => {
-      // Don't clear session on page unload
-      // This prevents logout when switching tabs or refreshing
-    };
-
-    // Add event listeners
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Cleanup function
-    return () => {
-      mounted.current = false;
-      subscription.unsubscribe();
-      
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-      
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+  const reconnect = async () => {
+    console.log('🔄 Mencoba reconnect ke Supabase...');
+    setConnectionStatus('connecting');
+    await checkSupabaseConnection();
+  };
 
   const signUp = async (email: string, password: string, username: string) => {
     if (!supabaseConfigured) {
-      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+      return { 
+        data: null, 
+        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+      };
     }
 
-    console.log('🔐 Signing up user:', email);
+    console.log('📝 Mendaftarkan user baru:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -234,18 +230,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (data.user && !error) {
-      console.log('👤 Creating user profile...');
-      // Create user profile
-      await supabase.from('users').insert({
-        id: data.user.id,
-        username,
-        exp: 0,
-        level: 1,
-        avatar_url: 'quoll1',
-        login_streak: 0,
-        longest_streak: 0,
-        total_logins: 0,
-      });
+      console.log('👤 Membuat profil user...');
+      try {
+        await supabase.from('users').insert({
+          id: data.user.id,
+          username,
+          exp: 0,
+          level: 1,
+          avatar_url: 'quoll1',
+          login_streak: 0,
+          longest_streak: 0,
+          total_logins: 0,
+        });
+        console.log('✅ Profil user berhasil dibuat');
+      } catch (profileError) {
+        console.error('❌ Error membuat profil user:', profileError);
+      }
     }
 
     return { data, error };
@@ -253,10 +253,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     if (!supabaseConfigured) {
-      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+      return { 
+        data: null, 
+        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+      };
     }
     
-    console.log('🔐 Signing in user:', email);
+    console.log('🔐 Melakukan sign in:', email);
     return await supabase.auth.signInWithPassword({ email, password });
   };
 
@@ -265,8 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    console.log('👋 Signing out user...');
-    // Clear the refresh timeout
+    console.log('👋 Melakukan sign out...');
     if (refreshTimeoutRef.current) {
       clearTimeout(refreshTimeoutRef.current);
     }
@@ -276,10 +278,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithProvider = async (provider: 'google' | 'facebook') => {
     if (!supabaseConfigured) {
-      return { data: null, error: new Error('Supabase is not configured. Please set up your Supabase integration.') };
+      return { 
+        data: null, 
+        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+      };
     }
     
-    console.log('🔐 Signing in with provider:', provider);
+    console.log('🔐 Sign in dengan provider:', provider);
     return await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -297,6 +302,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOut,
     signInWithProvider,
     supabaseConfigured,
+    connectionStatus,
+    reconnect,
   };
 
   return (

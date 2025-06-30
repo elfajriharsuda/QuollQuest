@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import SupabaseConnectionStatus from './components/SupabaseConnectionStatus';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -22,6 +23,9 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
+          {/* Global Supabase Connection Status */}
+          <SupabaseConnectionStatus />
+          
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
