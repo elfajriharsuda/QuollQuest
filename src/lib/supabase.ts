@@ -8,7 +8,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 console.log('🔍 Supabase Configuration Check:');
 console.log('URL present:', !!supabaseUrl);
 console.log('Key present:', !!supabaseAnonKey);
-console.log('URL value:', supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'Not found');
+console.log('URL value:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'Not found');
 console.log('Key value:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'Not found');
 
 let supabase: any;
@@ -38,18 +38,17 @@ const shouldShowSetupInstructions = isDevelopment && (isPlaceholderUrl || isPlac
 
 if (shouldShowSetupInstructions) {
   console.warn('⚠️ Supabase belum dikonfigurasi dengan benar.');
-  console.warn('🔧 Untuk mengaktifkan koneksi otomatis:');
-  console.warn('1. Klik tombol "Connect to Supabase" di pojok kanan atas');
-  console.warn('2. Atau setup manual: buat project di https://supabase.com');
-  console.warn('3. Salin URL dan anon key ke file .env');
-  console.warn('4. Restart development server');
+  console.warn('🔧 Untuk mengaktifkan koneksi:');
+  console.warn('1. Buat project di https://supabase.com');
+  console.warn('2. Salin URL dan anon key ke file .env');
+  console.warn('3. Restart development server');
   
   // Create enhanced dummy client with better error messages
   const dummyClient = {
     auth: {
       getSession: () => Promise.resolve({ 
         data: { session: null }, 
-        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial Supabase di file .env') 
       }),
       onAuthStateChange: () => ({ 
         data: { 
@@ -60,15 +59,15 @@ if (shouldShowSetupInstructions) {
       }),
       signUp: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
       }),
       signInWithPassword: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
       }),
       signInWithOAuth: () => Promise.resolve({ 
         data: null, 
-        error: new Error('🔌 Silakan hubungkan ke Supabase terlebih dahulu menggunakan tombol di toolbar.') 
+        error: new Error('🔌 Silakan setup Supabase terlebih dahulu di file .env') 
       }),
       signOut: () => Promise.resolve({ error: null }),
     },
@@ -233,27 +232,6 @@ if (shouldShowSetupInstructions) {
       console.error('❌ Gagal membuat Supabase client:', error);
     }
   }
-}
-
-// Auto-detection for environment changes
-if (isDevelopment) {
-  // Watch for environment variable changes
-  const originalEnv = { ...import.meta.env };
-  
-  setInterval(() => {
-    const currentUrl = import.meta.env.VITE_SUPABASE_URL;
-    const currentKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    if (currentUrl !== originalEnv.VITE_SUPABASE_URL || 
-        currentKey !== originalEnv.VITE_SUPABASE_ANON_KEY) {
-      console.log('🔄 Perubahan environment variable terdeteksi, silakan refresh halaman');
-      
-      // Show notification to user
-      if (window.confirm('🔄 Konfigurasi Supabase telah berubah. Refresh halaman untuk menerapkan perubahan?')) {
-        window.location.reload();
-      }
-    }
-  }, 5000); // Check every 5 seconds
 }
 
 export { supabase };

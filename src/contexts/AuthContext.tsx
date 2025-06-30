@@ -214,7 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
       };
     }
 
@@ -255,7 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
       };
     }
     
@@ -280,7 +280,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!supabaseConfigured) {
       return { 
         data: null, 
-        error: new Error('🔌 Supabase belum terhubung. Gunakan tombol "Connect to Supabase" untuk setup otomatis.') 
+        error: new Error('🔌 Supabase belum terhubung. Silakan setup kredensial di file .env') 
       };
     }
     
