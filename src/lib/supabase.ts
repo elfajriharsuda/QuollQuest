@@ -11,21 +11,24 @@ let supabase: any;
 
 // Check for placeholder values or missing environment variables
 const isPlaceholderUrl = !supabaseUrl || 
-  supabaseUrl === 'your_supabase_project_url_here' || 
+  supabaseUrl === 'your-project-id.supabase.co' || 
+  supabaseUrl === 'https://your-project-id.supabase.co' ||
   supabaseUrl === 'https://placeholder.supabase.co' ||
-  supabaseUrl.includes('placeholder');
+  supabaseUrl.includes('your-project-id');
 
 const isPlaceholderKey = !supabaseAnonKey || 
-  supabaseAnonKey === 'your_supabase_anon_key_here' || 
+  supabaseAnonKey === 'your-anon-key-here' || 
   supabaseAnonKey === 'placeholder-anon-key-here' ||
-  supabaseAnonKey.includes('placeholder');
+  supabaseAnonKey.includes('your-anon-key');
 
 // Validate environment variables
 if (!supabaseUrl || !supabaseAnonKey || isPlaceholderUrl || isPlaceholderKey) {
   console.warn('⚠️ Supabase environment variables are not properly configured.');
-  console.warn('Please update your .env file with your actual Supabase credentials.');
-  console.warn('Expected variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY');
-  console.warn('Get these from: https://supabase.com/dashboard > Settings > API');
+  console.warn('Please follow these steps to set up Supabase manually:');
+  console.warn('1. Go to https://supabase.com and create a new project');
+  console.warn('2. Go to Settings > API in your Supabase dashboard');
+  console.warn('3. Copy your Project URL and anon/public key');
+  console.warn('4. Update the .env file with your actual credentials');
   
   // Create a dummy client that will show helpful error messages
   const dummyClient = {
